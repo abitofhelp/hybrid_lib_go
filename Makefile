@@ -14,7 +14,7 @@
 
 PROJECT_NAME := hybrid_lib_go
 
-.PHONY: all build clean clean-coverage clean-deep compress \
+.PHONY: all build build-release clean clean-coverage clean-deep compress \
         deps help prereqs rebuild stats test test-all test-unit \
         test-integration test-framework test-coverage test-coverage-threshold \
         check check-arch lint format vet install-tools diagrams
@@ -110,6 +110,11 @@ build: check-arch prereqs
 	@echo "$(GREEN)Building $(PROJECT_NAME) library modules...$(NC)"
 	@$(GO) build ./domain/... ./application/... ./infrastructure/... ./api/...
 	@echo "$(GREEN)✓ Library build complete$(NC)"
+
+build-release: check-arch prereqs
+	@echo "$(GREEN)Building $(PROJECT_NAME) library modules (release)...$(NC)"
+	@$(GO) build ./domain/... ./application/... ./infrastructure/... ./api/...
+	@echo "$(GREEN)✓ Library release build complete$(NC)"
 
 clean:
 	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
