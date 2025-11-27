@@ -10,7 +10,7 @@ Orchestrates use cases and defines port interfaces for dependency inversion.
 - Define outbound ports (dependency interfaces)
 - Implement use cases that coordinate domain logic
 - Define command/DTO types for crossing layer boundaries
-- Re-export domain errors for presentation layer access
+- Re-export domain errors for outer layer access (API facade, adapters)
 
 ## Key Packages
 
@@ -24,7 +24,7 @@ Orchestrates use cases and defines port interfaces for dependency inversion.
 ## Architectural Rules
 
 - **Can import**: domain layer only
-- **Cannot import**: infrastructure, presentation, bootstrap
+- **Cannot import**: infrastructure, api
 - Use cases accept commands, return Result types
 - All dependencies injected via generic type parameters
 

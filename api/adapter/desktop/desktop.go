@@ -17,7 +17,7 @@
 // Usage:
 //
 //	import "github.com/abitofhelp/hybrid_lib_go/api"
-//	import "github.com/abitofhelp/hybrid_lib_go/api/desktop"
+//	import "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
 //
 //	// Create a greeter with console output
 //	greeter := desktop.NewGreeter()

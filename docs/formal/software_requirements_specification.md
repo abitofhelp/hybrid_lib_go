@@ -1,8 +1,8 @@
 # Software Requirements Specification (SRS)
 
-**Project:** Hybrid_Lib_Go - Go 1.23+ Application Starter
+**Project:** Hybrid_Lib_Go - Go 1.23+ Library
 **Version:** 1.0.0
-**Date:** November 25, 2025
+**Date:** November 26, 2025
 **SPDX-License-Identifier:** BSD-3-Clause
 **License File:** See the LICENSE file in the project root.
 **Copyright:** (c) 2025 Michael Gardner, A Bit of Help, Inc.
@@ -14,39 +14,33 @@
 
 ### 1.1 Purpose
 
-This Software Requirements Specification (SRS) describes the functional and non-functional requirements for Hybrid_Lib_Go, a professional Go 1.23+ application starter template demonstrating hexagonal architecture with functional programming principles.
+This Software Requirements Specification (SRS) describes the functional and non-functional requirements for Hybrid_Lib_Go, a professional Go 1.23+ library template demonstrating hexagonal architecture with functional programming principles.
 
 ### 1.2 Scope
 
 Hybrid_Lib_Go provides:
-- Professional 5-layer hexagonal architecture implementation
+- Professional 4-layer hexagonal architecture implementation
 - Static dependency injection via Go generics
-- Railway-oriented programming with Result[T] monads
-- Clean architecture boundary enforcement
-- Integration test suite for CLI verification
-- Domain unit tests with comprehensive assertions
-- Production-ready code quality standards
-- Educational documentation and examples
+- Railway-oriented error handling with Result monads
+- API facade pattern for clean public interface
+- Architecture boundary enforcement tooling
 
-### 1.3 Definitions and Acronyms
+### 1.3 Definitions
 
-- **DDD**: Domain-Driven Design
-- **SRS**: Software Requirements Specification
-- **SDS**: Software Design Specification
-- **CLI**: Command Line Interface
-- **DI**: Dependency Injection
-- **Result Monad**: Functional programming error handling pattern
-- **Hexagonal Architecture**: Also known as Ports and Adapters or Clean Architecture
-- **Static Dispatch**: Compile-time method resolution (no vtable)
+| Term | Definition |
+|------|------------|
+| **Library** | Reusable code package consumed by applications |
+| **Consumer** | Application that imports and uses this library |
+| **Result Monad** | Type encapsulating success (Ok) or failure (Err) |
+| **Static Dispatch** | Compile-time method resolution via generics |
+| **API Facade** | Public interface re-exporting internal types |
+| **Composition Root** | Location where dependencies are wired together |
 
 ### 1.4 References
 
 - Go 1.23 Language Specification
-- Clean Architecture (Robert C. Martin)
-- Domain-Driven Design (Eric Evans)
-- Railway-Oriented Programming (Scott Wlaschin)
 - Hexagonal Architecture (Alistair Cockburn)
-- Companion project: hybrid_app_ada (Ada 2022 implementation)
+- Railway-Oriented Programming (Scott Wlaschin)
 
 ---
 
@@ -54,38 +48,40 @@ Hybrid_Lib_Go provides:
 
 ### 2.1 Product Perspective
 
-Hybrid_Lib_Go is a standalone application starter template implementing professional architectural patterns:
+Hybrid_Lib_Go is a standalone library template implementing professional architectural patterns:
 
-**Architecture Layers**:
-1. **Domain**: Pure business logic (zero dependencies)
-2. **Application**: Use cases and port definitions
-3. **Infrastructure**: Driven adapters (implementations)
-4. **Presentation**: Driving adapters (user interfaces)
-5. **Bootstrap**: Composition root (dependency wiring)
+1. **Domain**: Pure business logic (ZERO external dependencies)
+2. **Application**: Use cases, ports, commands
+3. **Infrastructure**: Driven adapters
+4. **API**: Public facade and composition roots
 
 ### 2.2 Product Features
 
-1. **Hexagonal Architecture**: 5-layer clean architecture
-2. **Static Dependency Injection**: Compile-time wiring via generics
-3. **Railway-Oriented Programming**: Result[T] monad error handling
-4. **Architecture Enforcement**: Automated boundary validation (arch_guard.py)
-5. **Test Infrastructure**: Domain unit tests + CLI integration tests
-6. **Build Automation**: Comprehensive Makefile
-7. **Documentation**: Complete SRS, SDS, Test Guide
+1. **Hexagonal Architecture**: 4-layer library architecture
+2. **Type-Safe DI**: Static dispatch via generics
+3. **Functional Error Handling**: Result monad pattern
+4. **Clean API**: Public facade hiding internal structure
+5. **Architecture Enforcement**: Automated boundary validation
 
 ### 2.3 User Classes
 
-- **Application Developers**: Learn hexagonal architecture patterns
-- **Team Leads**: Adopt architectural standards
-- **Educators**: Teach clean architecture principles
-- **Go Developers**: Start new projects with best practices
+| User Class | Description | Needs |
+|------------|-------------|-------|
+| **Library Consumers** | Developers using the library | Clean API, documentation, examples |
+| **Library Maintainers** | Developers maintaining the library | Clear architecture, tests, tooling |
+| **Template Users** | Developers creating new libraries | Branding scripts, patterns to follow |
 
 ### 2.4 Operating Environment
 
-- **Platforms**: Linux, macOS, BSD, Windows
-- **Go Version**: Go 1.23+ (generics with type inference)
-- **Build System**: go build, make
-- **Testing**: go test, testify
+- **Runtime**: Go 1.23+ (generics and workspace support)
+- **Build Tools**: Make, Go toolchain
+- **Optional**: Python 3 (architecture validation)
+
+### 2.5 Constraints
+
+- Domain layer must have zero external module dependencies
+- API layer must not import infrastructure directly
+- All error handling must use Result monad (no panics across boundaries)
 
 ---
 
@@ -93,186 +89,108 @@ Hybrid_Lib_Go is a standalone application starter template implementing professi
 
 ### 3.1 Domain Layer (FR-01)
 
-**Priority**: Critical
-**Description**: Pure business logic with zero external dependencies
+**FR-01.1**: Implement Person value object with validation
+- Name must not be empty
+- Name must not exceed 100 characters
+- Immutable after creation
 
-**Requirements**:
-- FR-01.1: Value objects must be immutable
-- FR-01.2: Validation must occur in value object creation
-- FR-01.3: Domain must have zero infrastructure dependencies
-- FR-01.4: Business rules must be pure functions
-- FR-01.5: Result[T] monads must handle all errors
+**FR-01.2**: Implement ErrorType with error kinds
+- ValidationError for input validation failures
+- InfrastructureError for I/O and system failures
 
-**Test Coverage**: 42 unit test assertions (2 test functions)
+**FR-01.3**: Implement Result[T] monad
+- Ok variant for successful values
+- Err variant for error information
+- Methods: IsOk(), IsError(), Value(), ErrorInfo()
+- Functional operations: Map(), AndThen(), MapError(), etc.
+
+**FR-01.4**: Implement Option[T] monad
+- Some variant for present values
+- None variant for absent values
+- Methods: IsSome(), IsNone(), Value()
+
+**FR-01.5**: Zero external dependencies
+- No third-party imports in domain layer
+- Only Go standard library allowed
 
 ### 3.2 Application Layer (FR-02)
 
-**Priority**: Critical
-**Description**: Use case orchestration and port definitions
+**FR-02.1**: Implement GreetCommand input DTO
+- Encapsulate name parameter
+- Factory function for creation
 
-**Requirements**:
-- FR-02.1: Define inbound ports (use case interfaces)
-- FR-02.2: Define outbound ports (infrastructure interfaces)
-- FR-02.3: Implement use cases using Domain logic
-- FR-02.4: Commands must be immutable DTOs
-- FR-02.5: Models must be immutable output DTOs
-- FR-02.6: Re-export Domain.Error for Presentation access
-- FR-02.7: Use generics for static dispatch
+**FR-02.2**: Define WriterPort output interface
+- Write(ctx, message) returns Result[Unit]
+- Context support for cancellation
 
-**Test Coverage**: Covered by integration tests
+**FR-02.3**: Define GreetPort input interface
+- Execute(ctx, cmd) returns Result[Unit]
+- Generic type parameter for writer
+
+**FR-02.4**: Implement GreetUseCase generic use case
+- Generic over WriterPort implementation
+- Orchestrate domain validation and output
+- Return Result[Unit]
+
+**FR-02.5**: Implement Unit type
+- Represents void return value
+- Used in Result[Unit] for operations with no return value
+
+**FR-02.6**: Re-export Domain.Error for outer layers
+- Type aliases for error types
+- Zero overhead re-exports
 
 ### 3.3 Infrastructure Layer (FR-03)
 
-**Priority**: High
-**Description**: Concrete adapter implementations
+**FR-03.1**: Implement ConsoleWriter adapter
+- Implement WriterPort interface
+- Write to stdout by default
+- Support custom io.Writer injection
 
-**Requirements**:
-- FR-03.1: Implement outbound port interfaces
-- FR-03.2: Adapt external systems to Domain types
-- FR-03.3: Handle panics at boundaries via defer/recover
-- FR-03.4: Convert panics to Result errors
-- FR-03.5: Provide console writer adapter
-- FR-03.6: Support context.Context for cancellation
+**FR-03.2**: Implement panic recovery
+- Catch panics at adapter boundary
+- Convert to InfrastructureError Result
 
-**Test Coverage**: Covered by CLI integration tests
+**FR-03.3**: Implement context cancellation
+- Check context before I/O operations
+- Return InfrastructureError on cancellation
 
-### 3.4 Presentation Layer (FR-04)
+### 3.4 API Layer (FR-04)
 
-**Priority**: High
-**Description**: User interface adapters (CLI)
+**FR-04.1**: Re-export domain types in api/
+- Result, ErrorType, ErrorKind, Person
+- ValidationError, InfrastructureError constants
+- MaxNameLength constant
 
-**Requirements**:
-- FR-04.1: Cannot access Domain layer directly
-- FR-04.2: Must use application/error for error handling
-- FR-04.3: Must use application/model for output
-- FR-04.4: Command line argument parsing
-- FR-04.5: User-friendly error messages
-- FR-04.6: Exit code mapping (0=success, 1=error)
-- FR-04.7: Use generics for static dispatch
+**FR-04.2**: Re-export application types in api/
+- GreetCommand, WriterPort, Unit
+- Factory functions
 
-**Test Coverage**: 23 CLI integration tests
+**FR-04.3**: Do NOT import infrastructure in api/
+- Facade only re-exports types
+- No infrastructure wiring
 
-### 3.5 Bootstrap Layer (FR-05)
+**FR-04.4**: Implement Greeter in api/adapter/desktop/
+- Ready-to-use greeter with console output
+- NewGreeter() factory function
 
-**Priority**: High
-**Description**: Composition root with dependency wiring
+**FR-04.5**: Implement GreeterWithWriter in api/adapter/desktop/
+- Accept custom WriterPort implementation
+- Generic over writer type
 
-**Requirements**:
-- FR-05.1: Wire all generic instantiations
-- FR-05.2: Connect ports to adapters
-- FR-05.3: Minimal main() (delegate to Bootstrap)
-- FR-05.4: Single go.work workspace structure
-- FR-05.5: Static wiring (compile-time resolution)
+### 3.5 Testing (FR-05)
 
-**Test Coverage**: Covered by CLI integration tests
+**FR-05.1**: Unit tests for domain layer
+- Test Person validation
+- Test Result monad operations
 
-### 3.6 Error Handling (FR-06)
+**FR-05.2**: Unit tests for application layer
+- Test use case with mock writer
+- Test error propagation
 
-**Priority**: Critical
-**Description**: Railway-oriented programming with Result[T] monad
-
-**Requirements**:
-- FR-06.1: No panics across layer boundaries
-- FR-06.2: Result[T] monad for all fallible operations
-- FR-06.3: Error types with kind and message
-- FR-06.4: ValidationError for business rule violations
-- FR-06.5: InfrastructureError for system failures
-- FR-06.6: IsOk()/IsError() predicates
-- FR-06.7: Value()/ErrorInfo() accessors
-- FR-06.8: UnwrapOr() for default values
-
-**Test Coverage**: All tests verify error handling
-
-### 3.7 Dependency Injection (FR-07)
-
-**Priority**: Critical
-**Description**: Static DI via Go generics
-
-**Requirements**:
-- FR-07.1: Generic structs for use cases and commands
-- FR-07.2: Interface constraints for port abstraction
-- FR-07.3: Compile-time instantiation in Bootstrap
-- FR-07.4: Zero runtime overhead (no interface dispatch)
-- FR-07.5: Type-safe wiring
-- FR-07.6: Concrete type parameters at instantiation
-
-**Test Coverage**: Verified by compilation success
-
-### 3.8 Architecture Validation (FR-08)
-
-**Priority**: High
-**Description**: Automated boundary enforcement
-
-**Requirements**:
-- FR-08.1: Validate Presentation cannot access Domain
-- FR-08.2: Validate Infrastructure can access Domain
-- FR-08.3: Validate Application accesses Domain only
-- FR-08.4: Validate Domain has zero dependencies
-- FR-08.5: Python script for validation (arch_guard.py)
-- FR-08.6: Make target integration (make check-arch)
-
-**Test Coverage**: Python unit tests for arch_guard.py
-
-### 3.9 Build System (FR-09)
-
-**Priority**: High
-**Description**: Comprehensive build automation
-
-**Requirements**:
-- FR-09.1: Development build target (go build)
-- FR-09.2: Test execution targets (go test)
-- FR-09.3: Integration test target (go test -tags=integration)
-- FR-09.4: Architecture validation target
-- FR-09.5: Clean targets
-- FR-09.6: Statistics target
-
-**Test Coverage**: Manual verification of all targets
-
-### 3.10 Test Framework (FR-10)
-
-**Priority**: High
-**Description**: Go testing infrastructure
-
-**Requirements**:
-- FR-10.1: Go standard testing package
-- FR-10.2: testify for assertions
-- FR-10.3: Domain unit tests (pure function testing)
-- FR-10.4: CLI integration tests (binary execution)
-- FR-10.5: Table-driven tests for comprehensive coverage
-- FR-10.6: Build tag separation (//go:build integration)
-
-**Test Coverage**: Self-verifying (tests use the framework)
-
-### 3.11 Documentation (FR-11)
-
-**Priority**: High
-**Description**: Complete project documentation
-
-**Requirements**:
-- FR-11.1: Software Requirements Specification (this document)
-- FR-11.2: Software Design Specification
-- FR-11.3: Software Test Guide
-- FR-11.4: Quick Start Guide
-- FR-11.5: UML diagrams (PlantUML sources + SVG)
-- FR-11.6: Inline code documentation (godoc)
-- FR-11.7: README with examples
-
-**Test Coverage**: Documentation review process
-
-### 3.12 Code Quality (FR-12)
-
-**Priority**: High
-**Description**: Professional code standards
-
-**Requirements**:
-- FR-12.1: Zero go vet warnings
-- FR-12.2: Zero staticcheck violations
-- FR-12.3: Consistent naming conventions (Go style)
-- FR-12.4: File headers with copyright and SPDX
-- FR-12.5: Comprehensive godoc documentation
-- FR-12.6: Context support for cancellation
-
-**Test Coverage**: Build verification
+**FR-05.3**: Integration tests for API layer
+- Test consumer usage patterns
+- Test error handling
 
 ---
 
@@ -280,219 +198,197 @@ Hybrid_Lib_Go is a standalone application starter template implementing professi
 
 ### 4.1 Performance (NFR-01)
 
-**Priority**: Medium
+**NFR-01.1**: Zero runtime overhead for DI
+- Static dispatch eliminates vtable lookups
+- Method calls must be inlinable
 
-- NFR-01.1: Static dispatch overhead: 0 (compile-time resolution)
-- NFR-01.2: Result monad overhead: minimal (value types)
-- NFR-01.3: Build time: < 5 seconds (clean build)
-- NFR-01.4: Test execution: < 3 seconds (all tests)
-
-**Verification**: Benchmarks, profiling
+**NFR-01.2**: No heap allocation for Result values
+- Result struct should be stack-allocatable
+- No boxing of primitive values
 
 ### 4.2 Reliability (NFR-02)
 
-**Priority**: High
+**NFR-02.1**: No panics across layer boundaries
+- All panics caught at infrastructure boundary
+- Converted to Result errors
 
-- NFR-02.1: All tests must pass (100% pass rate)
-- NFR-02.2: No memory leaks
-- NFR-02.3: Deterministic error handling (no panics)
-- NFR-02.4: Type-safe boundaries (compile-time verification)
-- NFR-02.5: Context cancellation support
+**NFR-02.2**: Explicit error handling
+- All fallible operations return Result
+- No silent failures
 
-**Verification**: Test suite, race detector
+### 4.3 Maintainability (NFR-03)
 
-### 4.3 Portability (NFR-03)
+**NFR-03.1**: Enforce module boundaries
+- go.mod prevents forbidden imports
+- arch_guard.py validates at build time
 
-**Priority**: High
+**NFR-03.2**: Test coverage
+- Domain layer: 90%+ coverage
+- Application layer: 90%+ coverage
+- Infrastructure layer: 70%+ coverage
 
-- NFR-03.1: Support POSIX platforms (Linux, macOS, BSD)
-- NFR-03.2: Support Windows
-- NFR-03.3: Standard Go 1.23 (no CGO dependencies)
-- NFR-03.4: go.work compatible project structure
-- NFR-03.5: No platform-specific code in Domain/Application
+### 4.4 Portability (NFR-04)
 
-**Verification**: Multi-platform CI testing
+**NFR-04.1**: Go 1.23+ compatibility
+- Use generics (Go 1.18+)
+- Use workspaces (Go 1.18+)
 
-### 4.4 Maintainability (NFR-04)
+**NFR-04.2**: Cross-platform support
+- No platform-specific code in domain/application
+- Infrastructure adapters may be platform-specific
 
-**Priority**: Critical
+### 4.5 Documentation (NFR-05)
 
-- NFR-04.1: Clear layer separation (enforced by arch_guard.py)
-- NFR-04.2: Self-documenting code with godoc
-- NFR-04.3: Comprehensive test coverage
-- NFR-04.4: Standard file naming conventions
-- NFR-04.5: Consistent code style (gofmt)
-- NFR-04.6: Version control friendly
+**NFR-05.1**: Comprehensive documentation
+- README with usage examples
+- API reference
+- Architecture diagrams
 
-**Verification**: Architecture validation, code review
-
-### 4.5 Usability (NFR-05)
-
-**Priority**: High
-
-- NFR-05.1: Quick Start Guide for beginners
-- NFR-05.2: Working examples in under 5 minutes
-- NFR-05.3: Clear error messages
-- NFR-05.4: Comprehensive documentation
-- NFR-05.5: Educational UML diagrams
-- NFR-05.6: Make target help system
-
-**Verification**: User documentation review
-
-### 4.6 Testability (NFR-06)
-
-**Priority**: Critical
-
-- NFR-06.1: Pure functions in Domain (easy to test)
-- NFR-06.2: Port abstraction for test doubles
-- NFR-06.3: Standard Go testing framework
-- NFR-06.4: Test organization by type (unit/integration)
-- NFR-06.5: Coverage analysis support (go test -cover)
-
-**Verification**: Test suite execution
+**NFR-05.2**: Code documentation
+- SPDX headers on all source files
+- GoDoc comments on public APIs
 
 ---
 
 ## 5. System Constraints
 
-### 5.1 Technical Constraints
+### 5.1 Architectural Constraints
 
-- **SC-01**: Must compile with Go 1.23+
-- **SC-02**: Must use Go generics for static dispatch
-- **SC-03**: Must be go.work compatible
-- **SC-04**: Uses testify for test assertions
-- **SC-05**: No external runtime dependencies in production
+| ID | Constraint | Enforced By |
+|----|------------|-------------|
+| SC-01 | Domain has zero external dependencies | go.mod |
+| SC-02 | Application depends only on Domain | go.mod |
+| SC-03 | Infrastructure depends on Application + Domain | go.mod |
+| SC-04 | api/ depends on Application + Domain (NOT Infrastructure) | go.mod, arch_guard.py |
+| SC-05 | api/adapter/desktop/ is composition root (can depend on all) | go.mod |
+| SC-06 | All errors use Result monad | Code review |
+| SC-07 | No panics across boundaries | Panic recovery pattern |
 
-### 5.2 Design Constraints
+### 5.2 Dependency Rules
 
-- **SC-06**: Must enforce hexagonal architecture boundaries
-- **SC-07**: Presentation cannot access Domain directly
-- **SC-08**: Domain must have zero external dependencies
-- **SC-09**: Must use static dispatch (generics, not interfaces for DI)
-- **SC-10**: No panics across layer boundaries
-- **SC-11**: All errors via Result[T] monad
-- **SC-12**: Context support for cancellation
-
-### 5.3 Regulatory Constraints
-
-- **SC-13**: BSD-3-Clause license
-- **SC-14**: SPDX identifiers in all source files
-- **SC-15**: Copyright attribution to Michael Gardner, A Bit of Help, Inc.
+```
+api/adapter/desktop/  ────────────────────────────────┐
+    │                                                 │
+    ▼                                                 ▼
+   api/ ─────────────────┐                   infrastructure/
+    │                    │                            │
+    │                    ▼                            │
+    │              application/ ◄─────────────────────┘
+    │                    │
+    ▼                    ▼
+              ─────► domain/ ◄─────
+```
 
 ---
 
 ## 6. Verification and Validation
 
-### 6.1 Test Coverage Matrix
+### 6.1 Test Matrix
 
-| Requirement | Test Type | Test Count | Status |
-|-------------|-----------|------------|--------|
-| FR-01 (Domain) | Unit | 42 assertions | Pass |
-| FR-02 (Application) | Integration | Covered | Pass |
-| FR-03 (Infrastructure) | Integration | Covered | Pass |
-| FR-04 (Presentation) | Integration | 23 tests | Pass |
-| FR-05 (Bootstrap) | Integration | Covered | Pass |
-| FR-06 (Error Handling) | All | Verified | Pass |
-| FR-07 (Static DI) | Compile-time | N/A | Verified |
-| FR-08 (Arch Validation) | Python Unit | Tests | Pass |
-| FR-09 (Build System) | Manual | All targets | Verified |
-| FR-10 (Test Framework) | Self-test | N/A | Pass |
-| FR-11 (Documentation) | Review | Complete | Verified |
-| FR-12 (Code Quality) | Build | 0 warnings | Verified |
+| Requirement | Test Type | Test Location | Status |
+|-------------|-----------|---------------|--------|
+| FR-01 (Domain) | Unit | domain/error/result_test.go, domain/valueobject/person_test.go | Pass |
+| FR-02 (Application) | Unit | application/usecase/main_test.go | Pass |
+| FR-03 (Infrastructure) | Unit | infrastructure/adapter/main_test.go | Pass |
+| FR-04 (API) | Integration | test/integration/greet_flow_test.go | Pass |
+| FR-05 (Testing) | Meta | Verified | Pass |
 
-### 6.2 Verification Methods
+### 6.2 Architecture Validation
 
-- **Code Review**: All code reviewed before release
-- **Static Analysis**: go vet, staticcheck
-- **Dynamic Testing**: Domain unit tests + CLI integration tests
-- **Architecture Validation**: arch_guard.py enforcement
-- **Coverage Analysis**: go test -cover
-- **Documentation Review**: Complete formal specifications
+```bash
+# Validate architecture boundaries
+make check-arch
+
+# Expected output: ✓ Architecture validation PASSED
+```
+
+### 6.3 Build Verification
+
+```bash
+# Build all modules
+make build
+
+# Run all tests
+make test-all
+```
 
 ---
 
-## 7. Appendices
+## 7. Traceability Matrix
 
-### 7.1 Project Statistics
+### 7.1 Requirements to Components
 
-**Source Code**:
-- Go source files (.go): ~25
-- Total lines of code: ~2,500
+| Requirement | Component(s) |
+|-------------|--------------|
+| FR-01.1 | domain/valueobject/person.go |
+| FR-01.2 | domain/error/error.go |
+| FR-01.3 | domain/error/result.go |
+| FR-01.4 | domain/valueobject/option.go |
+| FR-02.1 | application/command/greet.go |
+| FR-02.2 | application/port/outbound/writer.go |
+| FR-02.3 | application/port/inbound/greet.go |
+| FR-02.4 | application/usecase/greet.go |
+| FR-02.5 | application/model/unit.go |
+| FR-02.6 | application/error/error.go |
+| FR-03.1-3 | infrastructure/adapter/consolewriter.go |
+| FR-04.1-3 | api/api.go |
+| FR-04.4-5 | api/adapter/desktop/desktop.go |
 
-**Tests**:
-- Domain unit tests: 2 functions, 42 assertions
-- CLI integration tests: 23 tests
-- Pass rate: 100%
+### 7.2 Requirements to Tests
 
-**Documentation**:
-- Formal specs: 3 (SRS, SDS, Test Guide)
-- Guides: 2 (Quick Start, Architecture Mapping)
-- UML diagrams: 5
-- README: Complete with examples
+| Requirement | Test File(s) |
+|-------------|--------------|
+| FR-01 | domain/valueobject/person_test.go, domain/error/result_test.go |
+| FR-02 | application/usecase/main_test.go |
+| FR-03 | infrastructure/adapter/main_test.go |
+| FR-04 | test/integration/greet_flow_test.go |
 
-**Build System**:
-- Makefile targets: 20+
-- Dependencies: testify (test only)
+---
 
-### 7.2 Layer Responsibilities Summary
+## 8. Appendices
 
-| Layer | Responsibilities | Dependencies | Tests |
-|-------|------------------|--------------|-------|
-| Domain | Business logic, validation | NONE | Unit (42) |
-| Application | Use cases, ports | Domain | Integration |
-| Infrastructure | Adapters (driven) | App + Domain | Integration |
-| Presentation | UI (driving) | Application ONLY | Integration (23) |
-| Bootstrap | DI wiring | ALL | Integration |
+### Appendix A: Layer Summary
 
-### 7.3 Static Dispatch Pattern
+| Layer | Dependencies | Purpose | Test Type |
+|-------|--------------|---------|-----------|
+| Domain | NONE | Business logic | Unit |
+| Application | Domain | Use cases, ports | Unit |
+| Infrastructure | App + Domain | Adapters | Unit/Integration |
+| API | App + Domain | Public facade | Integration |
+| API/adapter/desktop | ALL | Composition root | Integration |
+
+### Appendix B: API Usage Example
 
 ```go
-// Bootstrap instantiates with concrete types
-consoleWriter := adapter.NewConsoleWriter()
-greetUseCase := usecase.NewGreetUseCase[*adapter.ConsoleWriter](consoleWriter)
-greetCommand := command.NewGreetCommand[*usecase.GreetUseCase[*adapter.ConsoleWriter]](greetUseCase)
+import (
+    "context"
+    "github.com/abitofhelp/hybrid_lib_go/api"
+    "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
+)
 
-// All method calls are statically dispatched (no vtable)
-exitCode := greetCommand.Run(args)
+func main() {
+    greeter := desktop.NewGreeter()
+    ctx := context.Background()
+
+    result := greeter.Execute(ctx, api.NewGreetCommand("Alice"))
+
+    if result.IsOk() {
+        // Success
+    } else {
+        switch result.ErrorInfo().Kind {
+        case api.ValidationError:
+            // Handle validation error
+        case api.InfrastructureError:
+            // Handle infrastructure error
+        }
+    }
+}
 ```
-
-### 7.4 Dependency Graph
-
-```
-Bootstrap
-    |
-Presentation -> Application -> Domain
-    |              |
-Infrastructure ----+
-```
-
-**Critical Rule**: Presentation cannot access Domain directly (enforced by arch_guard.py)
 
 ---
 
-## 8. Traceability Matrix
+**Document History**
 
-| FR ID | Design Element | Test Coverage | Status |
-|-------|---------------|---------------|--------|
-| FR-01 | domain/valueobject/person.go | 42 unit tests | Pass |
-| FR-02 | application/usecase/greet.go | Integration | Pass |
-| FR-03 | infrastructure/adapter/consolewriter.go | Integration | Pass |
-| FR-04 | presentation/adapter/cli/command/greet.go | 23 integration | Pass |
-| FR-05 | bootstrap/cli/cli.go | Integration | Pass |
-| FR-06 | domain/error/result.go | All tests | Pass |
-| FR-07 | Generic instantiation | Compile-time | Verified |
-| FR-08 | arch_guard.py | Python tests | Pass |
-| FR-09 | Makefile | Manual | Verified |
-| FR-10 | go test + testify | Self-test | Pass |
-| FR-11 | docs/ directory | Review | Verified |
-| FR-12 | Build verification | 0 warnings | Verified |
-
----
-
-**Document Control**:
-- Version: 1.0.0
-- Last Updated: November 25, 2025
-- Status: Released
-- Copyright (c) 2025 Michael Gardner, A Bit of Help, Inc.
-- License: BSD-3-Clause
-- SPDX-License-Identifier: BSD-3-Clause
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-11-26 | Michael Gardner | Initial library version |

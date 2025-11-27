@@ -5,7 +5,7 @@ title Error Handling Flow (LIBRARY)\nRailway-Oriented Programming with Result[T]
 
 actor "Consumer\nApp Code" as User
 
-participant "API\napi/desktop.Greeter" as API #FFEBCD
+participant "API\napi/adapter/desktop.Greeter" as API #FFEBCD
 participant "Application\nusecase.GreetUseCase" as Application #E8F5E9
 participant "Infrastructure\nadapter.ConsoleWriter" as Infrastructure #E6F3FF
 participant "Domain\nerror.Result[T]" as Domain #FFF9E6

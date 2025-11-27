@@ -1,8 +1,8 @@
 # Software Test Guide
 
-**Project:** Hybrid_Lib_Go - Go 1.23+ Application Starter
+**Project:** Hybrid_Lib_Go - Go 1.23+ Library
 **Version:** 1.0.0
-**Date:** November 25, 2025
+**Date:** November 26, 2025
 **SPDX-License-Identifier:** BSD-3-Clause
 **License File:** See the LICENSE file in the project root.
 **Copyright:** (c) 2025 Michael Gardner, A Bit of Help, Inc.
@@ -14,582 +14,419 @@
 
 ### 1.1 Purpose
 
-This Software Test Guide describes the testing approach, test organization, execution procedures, and guidelines for the Hybrid_Lib_Go project.
+This Software Test Guide describes the testing strategy, organization, and procedures for Hybrid_Lib_Go library.
 
 ### 1.2 Scope
 
 This document covers:
-- Test strategy and organization (unit/integration)
-- Go testing framework usage
-- Running tests via Make and go test
-- Writing new tests
-- Coverage analysis
-- Test maintenance procedures
+- Test organization and structure
+- Test execution procedures
+- Coverage requirements
+- Testing patterns for hexagonal architecture
+
+### 1.3 Test Framework
+
+- **Unit Tests**: Go standard testing package with testify/assert
+- **Integration Tests**: Go testing with build tags
+- **Architecture Validation**: Python arch_guard.py script
 
 ---
 
-## 2. Test Strategy
+## 2. Test Organization
 
-### 2.1 Testing Levels
-
-Hybrid_Lib_Go uses two levels of testing:
-
-**Unit Tests** (42 assertions in 2 test functions)
-- Test individual components in isolation
-- Focus on Domain layer (pure functions)
-- Predictable, deterministic results
-- Fast execution
-- Location: `domain/*_test.go`
-
-**Integration Tests** (23 tests)
-- Test complete CLI application flow
-- Run actual greeter binary
-- Verify stdout, stderr, and exit codes
-- Black-box testing approach
-- Location: `test/integration/`
-
-### 2.2 Testing Philosophy
-
-- **Integration-First**: CLI apps are best tested via actual execution
-- **Domain Unit Tests**: Pure functions tested in isolation
-- **No Mocks**: Integration tests run the real binary
-- **Railway-Oriented**: Test both success and error paths
-- **Comprehensive**: Cover normal, edge, and error cases
-- **Automated**: All tests runnable via `make test`
-- **Fast**: All tests execute in < 3 seconds
-
----
-
-## 3. Test Organization
-
-### 3.1 Directory Structure
+### 2.1 Test Structure
 
 ```
 hybrid_lib_go/
-|-- domain/
-|   |-- error/
-|   |   |-- result_test.go      # Result monad unit tests (19 assertions)
-|   |   |-- main_test.go        # Test runner
-|   |-- valueobject/
-|       |-- person_test.go      # Person value object tests (23 assertions)
-|       |-- main_test.go        # Test runner
-|
-|-- test/
-    |-- integration/
-        |-- greet_flow_test.go  # CLI integration tests (23 tests)
-        |-- go.mod              # Integration test module
+├── domain/
+│   ├── error/
+│   │   └── result_test.go          # Result monad tests
+│   └── valueobject/
+│       └── person_test.go          # Person validation tests
+├── application/
+│   └── usecase/
+│       └── greet_usecase_test.go   # Use case tests
+├── infrastructure/
+│   └── adapter/
+│       └── console_writer_test.go  # Adapter tests
+├── test/
+│   ├── integration/
+│   │   └── greet_flow_test.go      # API integration tests
+│   └── python/
+│       ├── conftest.py             # Pytest fixtures
+│       └── test_arch_guard_go.py   # Architecture validation tests
+└── scripts/
+    └── arch_guard/
+        └── arch_guard.py           # Architecture validator
 ```
 
-### 3.2 Test Naming Convention
+### 2.2 Test Types
 
-- **Pattern**: `*_test.go`
-- **Test Functions**: `Test<Component>_<Scenario>` or `Test<Component>`
-- **Examples**:
-  - `result_test.go` -> Tests `domain/error.Result[T]`
-  - `person_test.go` -> Tests `domain/valueobject.Person`
-  - `greet_flow_test.go` -> Tests CLI greeter flow
+| Type | Location | Build Tag | Purpose |
+|------|----------|-----------|---------|
+| Unit | Co-located `*_test.go` | None | Test individual components |
+| Integration | `test/integration/` | `integration` | Test API usage patterns |
+| Architecture | `test/python/` | N/A (pytest) | Validate layer boundaries |
 
 ---
 
-## 4. Go Testing Framework
+## 3. Running Tests
 
-### 4.1 Standard Testing
-
-Hybrid_Lib_Go uses Go's standard `testing` package with `testify` assertions:
-
-**Benefits**:
-- Standard Go tooling
-- Rich assertion library (testify)
-- Table-driven test support
-- Parallel test execution
-- Coverage analysis built-in
-
-### 4.2 Framework Usage
-
-**Basic Test Structure**:
-```go
-import (
-    "testing"
-    "github.com/stretchr/testify/assert"
-)
-
-func TestComponent_Scenario(t *testing.T) {
-    // Arrange
-    input := "test input"
-
-    // Act
-    result := FunctionUnderTest(input)
-
-    // Assert
-    assert.True(t, result.IsOk(), "should succeed with valid input")
-    assert.Equal(t, expected, result.Value(), "should have correct value")
-}
-```
-
-### 4.3 Custom Assertion Helpers
-
-The project uses a custom test helper for colored output:
-
-```go
-// From domain tests
-func check(t *testing.T, condition bool, format string, args ...interface{}) {
-    t.Helper()
-    if condition {
-        fmt.Printf("\033[1;92m[PASS]\033[0m %s\n", fmt.Sprintf(format, args...))
-    } else {
-        fmt.Printf("\033[1;91m[FAIL]\033[0m %s\n", fmt.Sprintf(format, args...))
-        t.Errorf(format, args...)
-    }
-}
-```
-
----
-
-## 5. Running Tests
-
-### 5.1 Quick Start
+### 3.1 Make Targets
 
 ```bash
-# Run all tests
+# Run all tests (unit + integration)
 make test
 
-# Run domain unit tests only
-go test -v ./domain/...
+# Run unit tests only
+make test-unit
 
 # Run integration tests only
-go test -v -tags=integration ./test/integration/...
+make test-integration
+
+# Run all tests with verbose output
+make test-all
+
+# Run tests with coverage
+make test-coverage
 ```
 
-### 5.2 Make Targets
-
-**Test Execution**:
-```bash
-make test               # Run all tests
-make test-unit          # Domain unit tests only
-make test-integration   # CLI integration tests only
-make test-coverage      # Run with coverage analysis
-```
-
-**Build and Test**:
-```bash
-make build && make test  # Build then test
-make all                 # Full build + test cycle
-```
-
-### 5.3 Direct Execution
+### 3.2 Direct Go Commands
 
 ```bash
-# Domain unit tests
-go test -v ./domain/...
-
-# Integration tests (requires build tag)
-go test -v -tags=integration ./test/integration/...
+# Run all unit tests
+go test ./domain/... ./application/... ./infrastructure/... ./api/...
 
 # Run specific test
-go test -v -run TestGreeter_ValidName ./test/integration/...
+go test -v -run TestGreeter_Execute_Success ./test/integration/...
 
-# With race detector
-go test -race ./domain/...
+# Run integration tests
+go test -v -tags=integration ./test/integration/...
+
+# Run with coverage
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
 ```
 
-### 5.4 Expected Output
+### 3.3 Architecture Validation
 
-**Domain Tests**:
-```
-=== RUN   TestDomainErrorResult
-[PASS] Ok construction - IsOk returns true
-[PASS] Ok construction - IsError returns false
-[PASS] Ok value extraction - correct value
-[PASS] Error construction - IsError returns true
-...
---- PASS: TestDomainErrorResult (0.00s)
-PASS
-```
+```bash
+# Run architecture validation
+make check-arch
 
-**Integration Tests**:
-```
-=== RUN   TestGreeter_ValidName_Success
---- PASS: TestGreeter_ValidName_Success (0.01s)
-=== RUN   TestGreeter_EmptyName_ValidationError
---- PASS: TestGreeter_EmptyName_ValidationError (0.01s)
-...
-PASS
-ok      github.com/abitofhelp/hybrid_lib_go/test/integration    0.523s
+# Or directly
+python3 scripts/arch_guard/arch_guard.py
+
+# Run Python architecture tests
+cd test/python && pytest -v test_arch_guard_go.py
 ```
 
 ---
 
-## 6. Writing New Tests
+## 4. Test Patterns
 
-### 6.1 Unit Test Template
+### 4.1 Domain Layer Testing
+
+**Pattern**: Pure unit tests with no mocks
 
 ```go
-package valueobject_test
+func TestCreatePerson_EmptyName_ReturnsValidationError(t *testing.T) {
+    result := valueobject.CreatePerson("")
 
-import (
-    "testing"
-    "github.com/abitofhelp/hybrid_lib_go/domain/valueobject"
-)
+    assert.True(t, result.IsError())
+    assert.Equal(t, domerr.ValidationError, result.ErrorInfo().Kind)
+}
 
-func TestYourComponent(t *testing.T) {
-    t.Run("success case", func(t *testing.T) {
-        result := valueobject.CreateThing("valid")
+func TestCreatePerson_ValidName_ReturnsOk(t *testing.T) {
+    result := valueobject.CreatePerson("Alice")
 
-        check(t, result.IsOk(), "Valid input should return Ok")
-        check(t, result.Value().GetField() == "expected", "Field should match")
-    })
-
-    t.Run("error case", func(t *testing.T) {
-        result := valueobject.CreateThing("")
-
-        check(t, result.IsError(), "Empty input should return Error")
-        check(t, result.ErrorInfo().Kind == domerr.ValidationError, "Should be ValidationError")
-    })
+    assert.True(t, result.IsOk())
+    assert.Equal(t, "Alice", result.Value().Name())
 }
 ```
 
-### 6.2 Integration Test Template
+**Key Points**:
+- No mocks needed (pure functions)
+- Test business rules and validation
+- Test Result monad behavior
+
+### 4.2 Application Layer Testing
+
+**Pattern**: Mock output ports
+
+```go
+// MockWriter implements WriterPort for testing
+type MockWriter struct {
+    Buffer  bytes.Buffer
+    Err     error
+}
+
+func (w *MockWriter) Write(ctx context.Context, msg string) domerr.Result[model.Unit] {
+    if w.Err != nil {
+        return domerr.Err[model.Unit](domerr.NewInfrastructureError(w.Err.Error()))
+    }
+    w.Buffer.WriteString(msg)
+    return domerr.Ok(model.UnitValue)
+}
+
+func TestGreetUseCase_Execute_Success(t *testing.T) {
+    writer := &MockWriter{}
+    uc := usecase.NewGreetUseCase[*MockWriter](writer)
+    cmd := command.NewGreetCommand("Alice")
+
+    result := uc.Execute(context.Background(), cmd)
+
+    assert.True(t, result.IsOk())
+    assert.Contains(t, writer.Buffer.String(), "Hello, Alice!")
+}
+```
+
+**Key Points**:
+- Mock only output ports
+- Use real domain objects
+- Test orchestration logic
+
+### 4.3 Infrastructure Layer Testing
+
+**Pattern**: Test with real I/O or injected writers
+
+```go
+func TestConsoleWriter_Write_Success(t *testing.T) {
+    var buf bytes.Buffer
+    writer := adapter.NewConsoleWriterWithOutput(&buf)
+
+    result := writer.Write(context.Background(), "Hello, Test!")
+
+    assert.True(t, result.IsOk())
+    assert.Equal(t, "Hello, Test!\n", buf.String())
+}
+
+func TestConsoleWriter_Write_ContextCancelled(t *testing.T) {
+    ctx, cancel := context.WithCancel(context.Background())
+    cancel() // Cancel immediately
+
+    writer := adapter.NewConsoleWriter()
+    result := writer.Write(ctx, "Should not write")
+
+    assert.True(t, result.IsError())
+    assert.Equal(t, domerr.InfrastructureError, result.ErrorInfo().Kind)
+}
+```
+
+**Key Points**:
+- Test context cancellation
+- Test panic recovery
+- Inject test writers where possible
+
+### 4.4 API Integration Testing
+
+**Pattern**: Test consumer usage patterns
 
 ```go
 //go:build integration
 
-package integration
+func TestGreeter_Execute_Success(t *testing.T) {
+    writer := &MockWriter{}
+    greeter := desktop.GreeterWithWriter[*MockWriter](writer)
+    ctx := context.Background()
 
-import (
-    "testing"
-    "github.com/stretchr/testify/assert"
-)
+    result := greeter.Execute(ctx, api.NewGreetCommand("Alice"))
 
-func TestYourScenario_Description(t *testing.T) {
-    // Run the greeter binary
-    stdout, stderr, exitCode := runGreeter("input")
+    assert.True(t, result.IsOk())
+    assert.Contains(t, writer.String(), "Hello, Alice!")
+}
 
-    // Verify results
-    assert.Equal(t, 0, exitCode, "exit code should be 0")
-    assert.Equal(t, "Expected Output\n", stdout, "stdout should match")
-    assert.Empty(t, stderr, "stderr should be empty")
+func TestGreeter_Execute_EmptyName_ReturnsValidationError(t *testing.T) {
+    writer := &MockWriter{}
+    greeter := desktop.GreeterWithWriter[*MockWriter](writer)
+    ctx := context.Background()
+
+    result := greeter.Execute(ctx, api.NewGreetCommand(""))
+
+    assert.True(t, result.IsError())
+    assert.Equal(t, api.ValidationError, result.ErrorInfo().Kind)
 }
 ```
 
-### 6.3 Table-Driven Tests
-
-```go
-func TestGreeter_ValidNames_TableDriven(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        expected string
-    }{
-        {"simple name", "Alice", "Hello, Alice!\n"},
-        {"name with space", "John Doe", "Hello, John Doe!\n"},
-        {"unicode name", "Jose", "Hello, Jose!\n"},
-    }
-
-    for _, tc := range tests {
-        t.Run(tc.name, func(t *testing.T) {
-            stdout, stderr, exitCode := runGreeter(tc.input)
-
-            require.Equal(t, 0, exitCode, "exit code should be 0")
-            assert.Equal(t, tc.expected, stdout)
-            assert.Empty(t, stderr)
-        })
-    }
-}
-```
-
-### 6.4 Adding Tests
-
-**For Domain Tests**:
-1. Add test file in appropriate domain package
-2. Follow `*_test.go` naming
-3. Run with `go test -v ./domain/...`
-
-**For Integration Tests**:
-1. Add test function in `test/integration/greet_flow_test.go`
-2. Use `//go:build integration` tag
-3. Run with `go test -v -tags=integration ./test/integration/...`
+**Key Points**:
+- Use `//go:build integration` tag
+- Test through public API
+- Verify error handling
 
 ---
 
-## 7. Test Coverage
+## 5. Coverage Requirements
 
-### 7.1 Coverage Goals
+### 5.1 Per-Layer Coverage Targets
 
-- **Target**: > 80% line coverage for Domain layer
-- **Critical Code**: 100% coverage for error handling paths
-- **Domain Layer**: High coverage (pure functions, easy to test)
+| Layer | Target | Rationale |
+|-------|--------|-----------|
+| Domain | 90%+ | Core business logic must be thoroughly tested |
+| Application | 90%+ | Use cases orchestrate critical flows |
+| Infrastructure | 70%+ | Some I/O paths harder to test |
+| API | Integration | Tested via integration tests |
 
-### 7.2 Running Coverage Analysis
+### 5.2 Running Coverage
 
 ```bash
-# Generate coverage report
-go test -cover ./domain/...
-
-# Detailed coverage with HTML report
-go test -coverprofile=coverage.out ./domain/...
-go tool cover -html=coverage.out -o coverage.html
-
-# Via Make
+# Full coverage report
 make test-coverage
+
+# Per-layer coverage
+go test -coverprofile=coverage.out ./domain/...
+go tool cover -func=coverage.out
 ```
 
-### 7.3 Coverage Output
-
-```
-ok      github.com/abitofhelp/hybrid_lib_go/domain/error        0.002s  coverage: 95.0% of statements
-ok      github.com/abitofhelp/hybrid_lib_go/domain/valueobject  0.002s  coverage: 100.0% of statements
-```
-
----
-
-## 8. Test Maintenance
-
-### 8.1 When to Update Tests
-
-- **New Features**: Add tests before implementing
-- **Bug Fixes**: Add regression test first
-- **Refactoring**: Ensure tests still pass
-- **Requirements Change**: Update affected tests
-
-### 8.2 Test Quality Guidelines
-
-- **Clear Names**: Test names explain what's being verified
-- **One Assertion Per Concept**: Group related assertions together
-- **Arrange-Act-Assert**: Structure tests clearly
-- **No Business Logic**: Tests should be simple
-- **Fast Execution**: Avoid slow operations
-
-### 8.3 Debugging Failed Tests
+### 5.3 Coverage Report
 
 ```bash
-# Run single test for debugging
-go test -v -run TestGreeter_ValidName ./test/integration/...
+# Generate HTML report
+go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
-# Run with verbose output
-go test -v ./domain/...
-
-# Run with race detector
-go test -race ./domain/...
-
-# Use delve for debugging
-dlv test ./domain/valueobject -- -test.run TestDomainValueObjectPerson
+# View text summary
+cat coverage/coverage_summary.txt
 ```
 
 ---
 
-## 9. Integration Test Details
+## 6. Architecture Testing
 
-### 9.1 How Integration Tests Work
+### 6.1 arch_guard.py Validation
 
-The integration tests in `test/integration/greet_flow_test.go`:
-
-1. **TestMain**: Builds the greeter binary before tests run
-2. **runGreeter**: Executes the binary with arguments
-3. **Captures**: stdout, stderr, and exit code
-4. **Verifies**: Expected output and exit behavior
-
-```go
-func TestMain(m *testing.M) {
-    // Build the greeter binary
-    projectRoot := findProjectRoot()
-    greeterPath = filepath.Join(projectRoot, "greeter_test_binary")
-
-    cmd := exec.Command("go", "build", "-o", greeterPath, "./cmd/greeter")
-    cmd.Dir = projectRoot
-    if output, err := cmd.CombinedOutput(); err != nil {
-        panic("Failed to build greeter: " + err.Error())
-    }
-
-    // Run tests
-    code := m.Run()
-
-    // Cleanup
-    os.Remove(greeterPath)
-    os.Exit(code)
-}
-```
-
-### 9.2 runGreeter Helper
-
-```go
-func runGreeter(args ...string) (stdout, stderr string, exitCode int) {
-    cmd := exec.Command(greeterPath, args...)
-
-    var stdoutBuf, stderrBuf bytes.Buffer
-    cmd.Stdout = &stdoutBuf
-    cmd.Stderr = &stderrBuf
-
-    err := cmd.Run()
-
-    stdout = stdoutBuf.String()
-    stderr = stderrBuf.String()
-
-    if err != nil {
-        if exitErr, ok := err.(*exec.ExitError); ok {
-            exitCode = exitErr.ExitCode()
-        }
-    }
-
-    return
-}
-```
-
----
-
-## 10. Continuous Integration
-
-### 10.1 CI Testing Strategy
-
-All tests run on every commit:
+The `arch_guard.py` script validates:
+- go.mod dependencies are correct
+- Source files don't import forbidden packages
+- API layer doesn't import infrastructure
 
 ```bash
-# CI pipeline equivalent
-make clean
-make build
-make test
+# Run validation
 make check-arch
+
+# Expected output:
+# ✓ go.mod Configuration: VALID
+# ✓ Source File Dependencies: 0 violation(s)
+# ✓ Architecture validation PASSED
 ```
 
-### 10.2 Success Criteria
+### 6.2 Python Test Suite
 
-All must pass:
-- Zero build errors
-- Zero go vet warnings
-- All domain unit tests pass (42 assertions)
-- All integration tests pass (23 tests)
-- Architecture validation passes
-- Exit code 0 from all commands
-
----
-
-## 11. Test Statistics
-
-### 11.1 Current Test Metrics (v1.0.0)
-
-**Test Count**:
-- Total: 25 test functions
-  - Domain Unit: 2 functions (42 assertions)
-  - Integration: 23 tests
-- Pass Rate: 100%
-
-**Coverage**:
-- Domain/error: ~95%
-- Domain/valueobject: ~100%
-
-**Execution Time**:
-- Domain tests: < 0.1 seconds
-- Integration tests: < 2 seconds
-- Total: < 3 seconds
-
----
-
-## 12. Common Testing Patterns
-
-### 12.1 Testing Result[T] Monads
-
-```go
-// Test success path
-t.Run("success case", func(t *testing.T) {
-    result := FunctionUnderTest(validInput)
-
-    check(t, result.IsOk(), "Should succeed with valid input")
-    check(t, result.Value() == expected, "Should have correct value")
-})
-
-// Test error path
-t.Run("error case", func(t *testing.T) {
-    result := FunctionUnderTest(invalidInput)
-
-    check(t, result.IsError(), "Should fail with invalid input")
-    check(t, result.ErrorInfo().Kind == domerr.ValidationError, "Should be ValidationError")
-    check(t, strings.Contains(result.ErrorInfo().Message, "expected"), "Should have descriptive message")
-})
-```
-
-### 12.2 Testing Value Objects
-
-```go
-// Test validation
-t.Run("validation", func(t *testing.T) {
-    valid := valueobject.CreatePerson("Alice")
-    invalid := valueobject.CreatePerson("")
-
-    check(t, valid.IsOk(), "Valid input accepted")
-    check(t, invalid.IsError(), "Invalid input rejected")
-})
-
-// Test immutability (compile-time check)
-// person.name = "New" // Won't compile - unexported field
-```
-
-### 12.3 Testing CLI Output
-
-```go
-func TestGreeter_ValidName_Success(t *testing.T) {
-    stdout, stderr, exitCode := runGreeter("Alice")
-
-    assert.Equal(t, 0, exitCode, "exit code should be 0")
-    assert.Equal(t, "Hello, Alice!\n", stdout, "stdout should contain greeting")
-    assert.Empty(t, stderr, "stderr should be empty")
-}
-
-func TestGreeter_EmptyName_ValidationError(t *testing.T) {
-    stdout, stderr, exitCode := runGreeter("")
-
-    assert.Equal(t, 1, exitCode, "exit code should be 1")
-    assert.Empty(t, stdout, "stdout should be empty")
-    assert.Contains(t, stderr, "Error:", "stderr should contain error")
-}
-```
-
----
-
-## 13. Troubleshooting
-
-### 13.1 Common Issues
-
-**Q: Integration tests fail to build**
-
-A: Ensure you're using the build tag:
 ```bash
-go test -v -tags=integration ./test/integration/...
+# Run architecture test suite
+cd test/python
+pytest -v test_arch_guard_go.py
+
+# Test specific rule
+pytest -v test_arch_guard_go.py::test_api_cannot_import_infrastructure
 ```
 
-**Q: Tests fail with "cannot find package"**
+### 6.3 Key Rules Tested
 
-A: Update go.work to include test modules:
+| Rule | Test |
+|------|------|
+| Domain has no deps | `test_domain_has_no_dependencies` |
+| App depends on Domain only | `test_application_depends_on_domain` |
+| api/ cannot import infra | `test_api_cannot_import_infrastructure` |
+| api/adapter/desktop/ can import all | `test_api_desktop_can_import_all` |
+
+---
+
+## 7. Test Data
+
+### 7.1 Valid Test Cases
+
+| Input | Expected Result |
+|-------|-----------------|
+| `"Alice"` | Ok, "Hello, Alice!" |
+| `"Bob Smith"` | Ok, "Hello, Bob Smith!" |
+| `"世界"` | Ok, "Hello, 世界!" |
+
+### 7.2 Error Test Cases
+
+| Input | Expected Error |
+|-------|----------------|
+| `""` (empty) | ValidationError: name cannot be empty |
+| 101+ chars | ValidationError: name exceeds max length |
+| Cancelled context | InfrastructureError: context cancelled |
+
+---
+
+## 8. Continuous Integration
+
+### 8.1 CI Pipeline Steps
+
+1. **Build**: `make build`
+2. **Unit Tests**: `make test-unit`
+3. **Integration Tests**: `make test-integration`
+4. **Architecture Validation**: `make check-arch`
+5. **Linting**: `make lint`
+
+### 8.2 Pre-commit Checks
+
 ```bash
+# Full validation before commit
+make check-arch && make test-all && make lint
+```
+
+---
+
+## 9. Troubleshooting
+
+### 9.1 Common Issues
+
+**Test fails with "package not found"**
+```bash
+# Sync workspace
 go work sync
 ```
 
-**Q: Integration tests hang**
-
-A: Check if binary path is correct. The tests build from project root.
-
-**Q: Coverage doesn't include all packages**
-
-A: Specify packages explicitly:
+**Architecture validation fails**
 ```bash
-go test -coverprofile=coverage.out ./domain/...
+# Check specific violation
+make check-arch
+# Look for "FORBIDDEN_LATERAL_DEPENDENCY" or "ILLEGAL_LAYER_DEPENDENCY"
+```
+
+**Integration tests not running**
+```bash
+# Ensure build tag is used
+go test -tags=integration ./test/integration/...
+```
+
+### 9.2 Debug Mode
+
+```bash
+# Run single test with verbose output
+go test -v -run TestSpecificTest ./path/to/package/...
+
+# Run with race detector
+go test -race ./...
 ```
 
 ---
 
-## 14. Future Enhancements
+## 10. Test Maintenance
 
-### 14.1 Planned Improvements
+### 10.1 Adding New Tests
 
-- **Benchmark Tests**: Performance regression detection
-- **Fuzz Testing**: Go 1.18+ fuzzing for edge cases
-- **Parallel Integration Tests**: Speed up CI
-- **Property-Based Testing**: Test invariants with random inputs
+1. **Unit tests**: Add `*_test.go` in same package
+2. **Integration tests**: Add to `test/integration/` with build tag
+3. **Update coverage**: Ensure new code has tests
+
+### 10.2 Test Naming Convention
+
+```
+Test{Component}_{Method}_{Scenario}
+
+Examples:
+- TestCreatePerson_EmptyName_ReturnsValidationError
+- TestGreeter_Execute_Success
+- TestConsoleWriter_Write_ContextCancelled
+```
 
 ---
 
-**Document Control**:
-- Version: 1.0.0
-- Last Updated: November 25, 2025
-- Status: Released
-- Copyright (c) 2025 Michael Gardner, A Bit of Help, Inc.
-- License: BSD-3-Clause
-- SPDX-License-Identifier: BSD-3-Clause
+**Document History**
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-11-26 | Michael Gardner | Initial library version |

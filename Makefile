@@ -2,7 +2,7 @@
 # Project Makefile
 # =============================================================================
 # Project: hybrid_lib_go
-# Purpose: Hexagonal architecture demonstration with port/adapter pattern
+# Purpose: Hexagonal architecture library with port/adapter pattern
 #
 # This Makefile provides:
 #   - Build targets (build, clean, rebuild)
@@ -13,12 +13,11 @@
 # =============================================================================
 
 PROJECT_NAME := hybrid_lib_go
-BINARY_NAME := greeter
 
-.PHONY: all build build-dev build-release clean clean-coverage clean-deep compress \
+.PHONY: all build clean clean-coverage clean-deep compress \
         deps help prereqs rebuild stats test test-all test-unit \
-        test-integration test-e2e test-framework test-coverage test-coverage-threshold \
-        check check-arch lint format vet install-tools run diagrams
+        test-integration test-framework test-coverage test-coverage-threshold \
+        check check-arch lint format vet install-tools diagrams
 
 # =============================================================================
 # Colors for Output
@@ -45,7 +44,6 @@ PYTHON3 := python3
 # Directories
 # =============================================================================
 
-BIN_DIR := cmd/greeter
 COVERAGE_DIR := coverage
 MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
@@ -61,14 +59,11 @@ all: build
 
 help: ## Display this help message
 	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════╗$(NC)"
-	@echo "$(CYAN)$(BOLD)║  Hybrid App - Go 1.23+                           ║$(NC)"
+	@echo "$(CYAN)$(BOLD)║  Hybrid Lib - Go 1.23+ Library                   ║$(NC)"
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════╝$(NC)"
 	@echo " "
 	@echo "$(YELLOW)Build Commands:$(NC)"
-	@echo "  build              - Build project (development mode)"
-	@echo "  build-dev          - Build with race detector"
-	@echo "  build-release      - Build optimized binary"
-	@echo "  run                - Build and run the greeter"
+	@echo "  build              - Build all library modules"
 	@echo "  clean              - Clean build artifacts"
 	@echo "  clean-coverage     - Clean coverage data"
 	@echo "  clean-deep         - Deep clean (includes module cache)"
@@ -76,11 +71,10 @@ help: ## Display this help message
 	@echo "  rebuild            - Clean and rebuild"
 	@echo ""
 	@echo "$(YELLOW)Testing Commands:$(NC)"
-	@echo "  test               - Run all co-located unit tests"
-	@echo "  test-unit          - Run all unit tests (Ada-style [PASS]/[FAIL] output)"
-	@echo "  test-integration   - Run integration tests (cross-layer)"
-	@echo "  test-e2e           - Run E2E tests (black-box CLI testing)"
-	@echo "  test-framework     - Run all test suites (unit + integration + e2e)"
+	@echo "  test               - Run all tests (unit + integration)"
+	@echo "  test-unit          - Run unit tests only"
+	@echo "  test-integration   - Run integration tests (API usage)"
+	@echo "  test-framework     - Run all test suites (unit + integration)"
 	@echo "  test-coverage      - Run tests with per-layer coverage analysis"
 	@echo "  test-coverage-threshold - Run coverage with per-layer threshold checks"
 	@echo "                       (Domain: 100%, Application: 100%, Infra: 90%, Total: 85%)"
@@ -97,6 +91,7 @@ help: ## Display this help message
 	@echo "  deps               - Show dependency information"
 	@echo "  prereqs            - Verify prerequisites are satisfied"
 	@echo "  install-tools      - Install development tools (golangci-lint)"
+	@echo "  diagrams           - Generate SVG diagrams from PlantUML"
 	@echo ""
 	@echo "$(YELLOW)Workflow Shortcuts:$(NC)"
 	@echo "  all                - Build project (default)"
@@ -111,25 +106,13 @@ prereqs:
 	@command -v $(PYTHON3) >/dev/null 2>&1 || { echo "$(RED)✗ python3 not found$(NC)"; exit 1; }
 	@echo "$(GREEN)✓ All prerequisites satisfied$(NC)"
 
-build: build-dev
-
-build-dev: check-arch prereqs
-	@echo "$(GREEN)Building $(PROJECT_NAME) (development mode)...$(NC)"
-	@cd $(BIN_DIR) && $(GO) build -race
-	@echo "$(GREEN)✓ Development build complete: $(BIN_DIR)/$(BINARY_NAME)$(NC)"
-
-build-release: check-arch prereqs
-	@echo "$(GREEN)Building $(PROJECT_NAME) (release mode)...$(NC)"
-	@cd $(BIN_DIR) && $(GO) build -ldflags="-s -w"
-	@echo "$(GREEN)✓ Release build complete: $(BIN_DIR)/$(BINARY_NAME)$(NC)"
-
-run: build
-	@echo "$(GREEN)Running $(BINARY_NAME)...$(NC)"
-	@cd $(BIN_DIR) && ./$(BINARY_NAME) World
+build: check-arch prereqs
+	@echo "$(GREEN)Building $(PROJECT_NAME) library modules...$(NC)"
+	@$(GO) build ./domain/... ./application/... ./infrastructure/... ./api/...
+	@echo "$(GREEN)✓ Library build complete$(NC)"
 
 clean:
 	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
-	@rm -f $(BIN_DIR)/$(BINARY_NAME)
 	@$(GO) clean -cache -testcache
 	@find . -name "*.test" -delete 2>/dev/null || true
 	@find . -name "*.out" -delete 2>/dev/null || true
@@ -176,33 +159,28 @@ test-all: check-arch
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(YELLOW)  UNIT TESTS (Domain Layer)$(NC)"
+	@echo "$(YELLOW)  UNIT TESTS$(NC)"
 	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@$(GO) test -v ./domain/... ./application/... ./infrastructure/... ./presentation/... ./bootstrap/...
+	@$(GO) test -v ./domain/... ./application/... ./infrastructure/... ./api/...
 	@echo ""
 	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
 	@echo "$(YELLOW)  INTEGRATION TESTS$(NC)"
 	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
 	@$(GO) test -v -tags=integration ./test/integration/...
 	@echo ""
-	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(YELLOW)  E2E TESTS$(NC)"
-	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@$(GO) test -v -tags=e2e ./test/e2e/...
-	@echo ""
 	@echo "$(GREEN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(GREEN)$(BOLD)║  ✓ ALL TESTS PASSED                                          ║$(NC)"
 	@echo "$(GREEN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
 
-test-unit: check-arch ## Run unit tests with Ada-style framework output
+test-unit: check-arch ## Run unit tests only
 	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(CYAN)$(BOLD)║                    UNIT TEST SUITE                           ║$(NC)"
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@$(GO) test -v ./domain/... ./application/... ./infrastructure/... ./presentation/... ./bootstrap/...
+	@$(GO) test -v ./domain/... ./application/... ./infrastructure/... ./api/...
 	@echo ""
 
-test-integration: check-arch build ## Run integration tests (cross-layer)
+test-integration: check-arch build ## Run integration tests (API usage)
 	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(CYAN)$(BOLD)║                 INTEGRATION TEST SUITE                       ║$(NC)"
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
@@ -210,15 +188,7 @@ test-integration: check-arch build ## Run integration tests (cross-layer)
 	@$(GO) test -v -tags=integration ./test/integration/...
 	@echo ""
 
-test-e2e: check-arch build ## Run E2E tests (black-box CLI testing)
-	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(CYAN)$(BOLD)║                    E2E TEST SUITE                            ║$(NC)"
-	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
-	@echo ""
-	@$(GO) test -v -tags=e2e ./test/e2e/...
-	@echo ""
-
-test-framework: test-unit test-integration test-e2e ## Run all tests using Ada-style framework
+test-framework: test-unit test-integration ## Run all test suites (unit + integration)
 	@echo "$(GREEN)$(BOLD)✓ All test suites completed$(NC)"
 
 test-coverage: check-arch clean-coverage
@@ -231,7 +201,7 @@ test-coverage: check-arch clean-coverage
 	@echo ""
 	@# Run tests with coverage for all layers (Go workspace requires explicit paths)
 	@$(GO) test -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
-		./domain/... ./application/... ./infrastructure/... ./presentation/... ./bootstrap/... 2>/dev/null || true
+		./domain/... ./application/... ./infrastructure/... ./api/... 2>/dev/null || true
 	@echo ""
 	@echo "$(YELLOW)Per-Layer Coverage Summary:$(NC)"
 	@echo "$(YELLOW)───────────────────────────────────────────────────────────────$(NC)"
@@ -250,15 +220,10 @@ test-coverage: check-arch clean-coverage
 	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
 		grep -E "^github.com/.*/infrastructure/" | \
 		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@# Presentation layer coverage
-	@printf "  Presentation:    "
+	@# API layer coverage
+	@printf "  API:             "
 	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/presentation/" | \
-		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@# Bootstrap layer coverage
-	@printf "  Bootstrap:       "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/bootstrap/" | \
+		grep -E "^github.com/.*/api/" | \
 		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
 	@echo "$(YELLOW)───────────────────────────────────────────────────────────────$(NC)"
 	@# Total coverage
@@ -337,7 +302,7 @@ check-arch: ## Validate hexagonal architecture boundaries
 lint:
 	@echo "$(GREEN)Running golangci-lint...$(NC)"
 	@if command -v $(GOLINT) >/dev/null 2>&1; then \
-		$(GOLINT) run ./domain/... ./application/... ./infrastructure/... ./presentation/... ./bootstrap/...; \
+		$(GOLINT) run ./domain/... ./application/... ./infrastructure/... ./api/...; \
 		echo "$(GREEN)✓ Linting complete$(NC)"; \
 	else \
 		echo "$(YELLOW)⚠ golangci-lint not installed (run 'make install-tools')$(NC)"; \
@@ -345,7 +310,7 @@ lint:
 
 vet:
 	@echo "$(GREEN)Running go vet...$(NC)"
-	@$(GO) vet ./domain/... ./application/... ./infrastructure/... ./presentation/... ./bootstrap/...
+	@$(GO) vet ./domain/... ./application/... ./infrastructure/... ./api/...
 	@echo "$(GREEN)✓ Vet complete$(NC)"
 
 format:
@@ -358,29 +323,21 @@ format:
 # =============================================================================
 
 stats:
-	@echo "$(CYAN)$(BOLD)Project Statistics for $(PROJECT_NAME)$(NC)"
+	@echo "$(CYAN)$(BOLD)Project Statistics for $(PROJECT_NAME) (Library)$(NC)"
 	@echo "$(YELLOW)════════════════════════════════════════$(NC)"
 	@echo ""
 	@echo "Go Source Files by Layer:"
 	@echo "  Domain:          $$(find domain -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
 	@echo "  Application:     $$(find application -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
 	@echo "  Infrastructure:  $$(find infrastructure -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
-	@echo "  Presentation:    $$(find presentation -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
-	@echo "  Bootstrap:       $$(find bootstrap -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
+	@echo "  API:             $$(find api -name "*.go" ! -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
 	@echo ""
 	@echo "Test Files:"
 	@echo "  Unit tests:      $$(find . -name "*_test.go" 2>/dev/null | wc -l | tr -d ' ')"
 	@echo ""
 	@echo "Lines of Code:"
-	@find domain application infrastructure presentation bootstrap -name "*.go" ! -name "*_test.go" 2>/dev/null | \
+	@find domain application infrastructure api -name "*.go" ! -name "*_test.go" 2>/dev/null | \
 	  xargs wc -l 2>/dev/null | tail -1 | awk '{printf "  Total: %d lines\n", $$1}' || echo "  Total: 0 lines"
-	@echo ""
-	@echo "Build Artifacts:"
-	@if [ -f "$(BIN_DIR)/$(BINARY_NAME)" ]; then \
-		echo "  Binary: $$(ls -lh $(BIN_DIR)/$(BINARY_NAME) 2>/dev/null | awk '{print $$5}')"; \
-	else \
-		echo "  No binary found (run 'make build')"; \
-	fi
 
 # =============================================================================
 # Utility Targets

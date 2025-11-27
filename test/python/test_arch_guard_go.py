@@ -19,7 +19,7 @@ LIBRARY ARCHITECTURE (4 layers):
 - application: imports domain only
 - infrastructure: imports application, domain
 - api: imports application, domain (NOT infrastructure)
-- api/desktop: can import all (platform-specific composition)
+- api/adapter/desktop: can import all (platform-specific composition)
 
 NOTE: This is for LIBRARY projects. Application projects have 5 layers
 (domain, application, infrastructure, presentation, bootstrap).
@@ -155,7 +155,7 @@ LAYER_DEPENDENCY_CASES = [
         to_layer="infrastructure",
         should_violate=True,
         violation_type="API_IMPORTS_INFRASTRUCTURE",
-        description="CRITICAL: API must NOT import infrastructure - use api/desktop",
+        description="CRITICAL: API must NOT import infrastructure - use api/adapter/desktop",
     ),
 ]
 

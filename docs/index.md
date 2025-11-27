@@ -45,11 +45,6 @@ This is a **library** template (not an application). It provides reusable busine
   - Running tests
   - Coverage procedures
 
-### Development Guides
-
-- **[Architecture Mapping Guide](guides/architecture_mapping.md)** - Layer responsibilities
-- **[Ports Mapping Guide](guides/ports_mapping.md)** - Port definitions and implementations
-
 ---
 
 ## Architecture Overview
@@ -60,7 +55,7 @@ Hybrid_Lib_Go implements a **4-layer library hexagonal architecture** (also know
 
 ```
 ┌─────────────────────────────────────────────┐
-│  API Layer (Public Facade)                  │  api/, api/desktop/
+│  API Layer (Public Facade)                  │  api/, api/adapter/desktop/
 ├─────────────────────────────────────────────┤
 │  Infrastructure                             │  Driven Adapters (Console Writer)
 ├─────────────────────────────────────────────┤
@@ -75,7 +70,7 @@ Hybrid_Lib_Go implements a **4-layer library hexagonal architecture** (also know
 | Library (4 layers)       | Application (5 layers)      |
 |--------------------------|----------------------------|
 | api/                     | bootstrap/                 |
-| api/desktop/             | presentation/              |
+| api/adapter/desktop/             | presentation/              |
 | infrastructure/          | infrastructure/            |
 | application/             | application/               |
 | domain/                  | domain/                    |
@@ -84,7 +79,7 @@ Hybrid_Lib_Go implements a **4-layer library hexagonal architecture** (also know
 
 1. **Domain Isolation**: Domain layer has zero external dependencies
 2. **API Facade**: api/ re-exports types, does NOT import infrastructure
-3. **Platform Wiring**: api/desktop/ wires infrastructure to application
+3. **Platform Wiring**: api/adapter/desktop/ wires infrastructure to application
 4. **Static Dispatch**: Dependency injection via generics (compile-time, zero overhead)
 5. **Railway-Oriented**: Result monads for error handling (no panics across boundaries)
 6. **Multi-Module Workspace**: go.work manages separate go.mod per layer
@@ -98,10 +93,10 @@ Hybrid_Lib_Go implements a **4-layer library hexagonal architecture** (also know
 Located in `diagrams/` directory:
 
 - **layer_dependencies.svg** - Shows 4-layer library dependency flow
-- **application_error_pattern.svg** - Error handling patterns
+- **api_reexport_pattern.svg** - API facade re-export pattern
 - **package_structure.svg** - Actual package hierarchy
 - **error_handling_flow.svg** - Error propagation through layers
-- **static_dispatch.svg** - Generic vs interface comparison
+- **static_dispatch_api.svg** - Generic vs interface comparison
 
 All diagrams are generated from PlantUML sources (.puml files).
 
@@ -115,7 +110,7 @@ All diagrams are generated from PlantUML sources (.puml files).
 import (
     "context"
     "github.com/abitofhelp/hybrid_lib_go/api"
-    "github.com/abitofhelp/hybrid_lib_go/api/desktop"
+    "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
 )
 
 func main() {
@@ -170,7 +165,7 @@ type GreetUseCase[W WriterPort] struct {
     writer W
 }
 
-// Wiring in api/desktop (compile-time resolution)
+// Wiring in api/adapter/desktop (compile-time resolution)
 writer := adapter.NewConsoleWriter()
 uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](writer)
 ```
@@ -222,7 +217,7 @@ func NewGreetCommand(name string) GreetCommand {
 }
 ```
 
-Infrastructure is wired in platform-specific sub-packages (api/desktop/).
+Infrastructure is wired in platform-specific sub-packages (api/adapter/desktop/).
 
 ---
 
@@ -233,9 +228,10 @@ hybrid_lib_go/
 ├── api/                       # Public facade
 │   ├── go.mod                 # Depends on application + domain (NOT infrastructure)
 │   ├── api.go                 # Re-exports types
-│   └── desktop/               # Platform-specific wiring
-│       ├── go.mod             # Depends on all layers
-│       └── desktop.go         # Creates ready-to-use greeter
+│   └── adapter/
+│       └── desktop/           # Platform-specific wiring (composition root)
+│           ├── go.mod         # Depends on all layers
+│           └── desktop.go     # Creates ready-to-use greeter
 ├── domain/                    # Pure business logic
 │   ├── go.mod                 # ZERO external dependencies
 │   ├── error/                 # Result monad, error types
@@ -257,7 +253,6 @@ hybrid_lib_go/
 ├── docs/
 │   ├── formal/                # SRS, SDS, Test Guide
 │   ├── diagrams/              # UML diagrams
-│   ├── guides/                # Architecture guides
 │   ├── quick_start.md         # Getting started
 │   └── index.md               # This file
 ├── scripts/

@@ -18,7 +18,7 @@ Implements outbound ports with concrete adapters for external services.
 ## Architectural Rules
 
 - **Can import**: domain, application layers
-- **Cannot import**: presentation, bootstrap
+- **Cannot import**: api layer
 - Must implement interfaces from `application/port/outbound/`
 - Convert all errors to domain.error.ErrorType
 - Recover from panics and convert to Result errors
@@ -27,17 +27,54 @@ Implements outbound ports with concrete adapters for external services.
 
 ```go
 // ConsoleWriter implements outbound.WriterPort
-type ConsoleWriter struct{}
+type ConsoleWriter struct {
+    w io.Writer
+}
 
-func (w *ConsoleWriter) Write(ctx context.Context, msg string) Result[model.Unit] {
+func (cw *ConsoleWriter) Write(ctx context.Context, msg string) domerr.Result[model.Unit] {
     // Panic recovery wrapper
     defer func() {
         if r := recover(); r != nil {
-            // Convert panic to Result error
+            result = domerr.Err[model.Unit](
+                domerr.NewInfrastructureError("panic recovered"))
         }
     }()
 
-    fmt.Println(msg)
-    return Ok(model.Unit{})
+    // Context cancellation check
+    select {
+    case <-ctx.Done():
+        return domerr.Err[model.Unit](
+            domerr.NewInfrastructureError("context cancelled"))
+    default:
+    }
+
+    // Actual I/O operation
+    _, err := fmt.Fprintln(cw.w, msg)
+    if err != nil {
+        return domerr.Err[model.Unit](
+            domerr.NewInfrastructureError(err.Error()))
+    }
+
+    return domerr.Ok(model.UnitValue)
 }
 ```
+
+## Panic Recovery Pattern
+
+All infrastructure adapters should recover from panics at the boundary:
+
+```go
+func (adapter *SomeAdapter) Operation() (result domerr.Result[T]) {
+    defer func() {
+        if r := recover(); r != nil {
+            result = domerr.Err[T](
+                domerr.NewInfrastructureError(fmt.Sprintf("panic: %v", r)))
+        }
+    }()
+
+    // ... operation that might panic ...
+}
+```
+
+This ensures that panics in third-party libraries or unexpected conditions
+are converted to proper Result errors and don't crash the application.

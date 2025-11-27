@@ -4,20 +4,20 @@
 // Description: Input port for greet use case
 
 // Package inbound defines input (driving/primary) ports - interfaces that
-// the application layer EXPOSES and the presentation layer CALLS.
+// the application layer EXPOSES and outer layers CALL.
 //
 // Architecture Notes:
 //   - Part of the APPLICATION layer
 //   - Application defines the interface it PROVIDES
-//   - Presentation layer CALLS through this interface
-//   - Enables dependency inversion: Presentation depends on abstraction, not concrete use case
+//   - Outer layers (API facade, adapters, consuming apps) CALL through this interface
+//   - Enables dependency inversion: outer layers depend on abstraction, not concrete use case
 //   - Uses interfaces with generics for STATIC DISPATCH (compile-time resolution)
 //
 // Static Dispatch Pattern:
 //  1. Application defines GreetPort interface (the contract)
 //  2. Application implements GreetUseCase[W WriterPort] satisfying GreetPort
-//  3. Presentation command is generic over GreetPort: GreetCommand[UC GreetPort]
-//  4. Bootstrap instantiates with concrete type
+//  3. API/adapter is generic over GreetPort: Greeter wraps GreetUseCase
+//  4. Composition root (api/adapter/desktop) instantiates with concrete type
 //  5. Compiler knows exact type → static dispatch, no vtable lookup
 //
 // Mapping to Ada:
@@ -29,13 +29,13 @@
 //
 //	import "github.com/abitofhelp/hybrid_lib_go/application/port/inbound"
 //
-//	type GreetCommand[UC inbound.GreetPort] struct {
-//	    useCase UC  // Concrete type known at compile time
+//	// API adapter wraps use case with static dispatch
+//	type Greeter struct {
+//	    useCase *usecase.GreetUseCase[*adapter.ConsoleWriter]
 //	}
 //
-//	func (c *GreetCommand[UC]) Run(args []string) int {
-//	    result := c.useCase.Execute(ctx, cmd)  // Static dispatch
-//	    // ...
+//	func (g *Greeter) Execute(ctx context.Context, cmd api.GreetCommand) api.Result[api.Unit] {
+//	    return g.useCase.Execute(ctx, cmd)  // Static dispatch
 //	}
 package inbound
 
@@ -49,10 +49,10 @@ import (
 
 // GreetPort is an input port contract for the greet use case.
 //
-// This interface defines the contract between Presentation and Application layers.
+// This interface defines the contract between outer layers and Application layer.
 // Any use case that wants to provide greet functionality must:
 //  1. Implement this interface (GreetUseCase does)
-//  2. Be injected into presentation commands via generic type parameter
+//  2. Be injected into API adapters via generic type parameter
 //
 // Static Dispatch:
 //   - When used as generic type parameter: GreetCommand[UC GreetPort]

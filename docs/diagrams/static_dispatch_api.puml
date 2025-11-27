@@ -1,8 +1,8 @@
-@startuml static_dispatch
+@startuml static_dispatch_api
 !theme plain
 skinparam linetype ortho
 
-title Static vs Dynamic Dispatch\nDependency Injection in Go with Generics
+title Static vs Dynamic Dispatch (LIBRARY)\nDependency Injection in Go with Generics
 
 package "Dynamic Dispatch\n(Runtime Polymorphism)" as DynamicPkg #FFE4E1 {
   interface WriterPort <<interface>> {
@@ -32,7 +32,7 @@ package "Static Dispatch\n(Compile-Time Polymorphism)" as StaticPkg #E8F5E9 {
     +Execute(ctx, cmd) Result
   }
 
-  class "Bootstrap\nInstantiation" as StaticInst <<wired at compile time>> {
+  class "api/adapter/desktop\nInstantiation" as StaticInst <<wired at compile time>> {
     uc := NewGreetUseCase[
       *ConsoleWriter](writer)
   }
@@ -64,13 +64,15 @@ note right of StaticGUC
 end note
 
 note bottom of StaticPkg #CCFFCC
-  **This Project Uses Static Dispatch**
+  **This Library Uses Static Dispatch**
 
   ```go
-  // Bootstrap instantiates with concrete types
-  writer := adapter.NewConsoleWriter()
-  uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](writer)
-  cmd := command.NewGreetCommand[*usecase.GreetUseCase[*adapter.ConsoleWriter]](uc)
+  // api/adapter/desktop instantiates with concrete types
+  func NewGreeter() *Greeter {
+    writer := adapter.NewConsoleWriter()
+    uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](writer)
+    return &Greeter{useCase: uc}
+  }
 
   // Compiler knows exact types
   // All calls are statically dispatched
@@ -106,10 +108,10 @@ legend right
   • Full type checking at compile time
   • Errors caught before runtime
 
-  **Matching Ada Pattern:**
-  • Ada uses generics for static dispatch
-  • Go generics provide equivalent pattern
-  • Same architecture, same performance
+  **Library Wiring (api/adapter/desktop):**
+  • api/adapter/desktop acts as composition root
+  • Instantiates generics with concrete types
+  • Provides ready-to-use instances
 
   **Go Generics (1.18+)**
   ═══════════════════════════════════════

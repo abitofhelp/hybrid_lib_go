@@ -1,0 +1,198 @@
+@startuml api_reexport_pattern
+!theme plain
+
+title API Re-export Pattern (LIBRARY)\nPublic Facade for Consumer Applications
+
+package "Domain Layer" as Domain #FFF9E6 {
+  class "domain/error" as DomainError {
+    + ErrorType : struct
+    + ErrorKind : type
+    + ValidationError : const
+    + InfrastructureError : const
+    + Result[T] : generic struct
+    --
+    Canonical error definitions
+  }
+
+  class "domain/valueobject" as DomainVO {
+    + Person : struct
+    + CreatePerson(name) : Result[Person]
+    + MaxNameLength : const
+    --
+    Domain value objects
+  }
+}
+
+package "Application Layer" as Application #E8F5E9 {
+  class "application/command" as AppCommand {
+    + GreetCommand : struct
+    + NewGreetCommand(name) : GreetCommand
+    --
+    Input DTOs
+  }
+
+  class "application/port/outbound" as Writer {
+    + WriterPort : interface
+    + Write(ctx, message) : Result[Unit]
+    --
+    **Static dispatch via generics**
+  }
+
+  class "application/model" as AppModel {
+    + Unit : struct
+    --
+    Output DTOs
+  }
+}
+
+package "API Layer (Public Facade)" as API #FFEBCD {
+  class "api/api.go" as APIFacade {
+    + Result[T] : type alias
+    + ErrorType : type alias
+    + ErrorKind : type alias
+    + Person : type alias
+    + GreetCommand : type alias
+    + WriterPort : type alias
+    + Unit : type alias
+    + ValidationError : const
+    + InfrastructureError : const
+    + CreatePerson(name) : Result[Person]
+    + NewGreetCommand(name) : GreetCommand
+    --
+    **Re-exports for consumers**
+    Zero overhead (type aliases)
+  }
+}
+
+package "API Sub-Package (Composition Root)" as APIDesktop #FFE4B5 {
+  class "api/adapter/desktop/desktop.go" as Desktop {
+    + Greeter : struct
+    + NewGreeter() : *Greeter
+    + GreeterWithWriter[W](w) : *GreeterCustom[W]
+    --
+    **Wires infrastructure**
+    Ready-to-use instances
+  }
+}
+
+package "Infrastructure Layer" as Infrastructure #E6F3FF {
+  class "infrastructure/adapter" as ConsoleWriter {
+    + ConsoleWriter : struct
+    + Write(ctx, message) : Result[Unit]
+    + NewConsoleWriter() : *ConsoleWriter
+    --
+    Implements **WriterPort**
+  }
+}
+
+package "Consumer Application" as Consumer #E0FFE0 {
+  class "Consumer Code" as ConsumerApp {
+    Uses api.* types
+    Calls desktop.NewGreeter()
+    OR wires own infrastructure
+    --
+    **Library consumer**
+  }
+}
+
+' Re-export relationships
+DomainError <.. APIFacade : re-exports
+DomainVO <.. APIFacade : re-exports
+AppCommand <.. APIFacade : re-exports
+Writer <.. APIFacade : re-exports
+AppModel <.. APIFacade : re-exports
+
+' Desktop wiring
+APIFacade <.. Desktop : uses types
+ConsoleWriter <.. Desktop : wires
+
+' Consumer usage
+APIFacade <.. ConsumerApp : imports api.*
+Desktop <.. ConsumerApp : imports api/adapter/desktop
+
+note right of APIFacade
+  **API Facade Pattern**
+  ═══════════════════════════
+
+  ```go
+  package api
+
+  import (
+    "github.com/.../application/command"
+    domerr "github.com/.../domain/error"
+    "github.com/.../domain/valueobject"
+  )
+
+  // Type aliases - zero overhead
+  type Result[T any] = domerr.Result[T]
+  type Person = valueobject.Person
+  type GreetCommand = command.GreetCommand
+
+  // Factory functions
+  func CreatePerson(name string) Result[Person] {
+    return valueobject.CreatePerson(name)
+  }
+  ```
+end note
+
+note bottom of Desktop
+  **Composition Root**
+  ════════════════════════
+
+  ```go
+  package desktop
+
+  import (
+    "github.com/.../api"
+    "github.com/.../infrastructure/adapter"
+  )
+
+  func NewGreeter() *Greeter {
+    writer := adapter.NewConsoleWriter()
+    uc := usecase.NewGreetUseCase[
+      *adapter.ConsoleWriter](writer)
+    return &Greeter{useCase: uc}
+  }
+  ```
+end note
+
+note bottom of ConsumerApp
+  **Consumer Usage**
+  ════════════════════════
+
+  ```go
+  import (
+    "github.com/.../api"
+    "github.com/.../api/adapter/desktop"
+  )
+
+  // Option 1: Use ready-to-use greeter
+  greeter := desktop.NewGreeter()
+  result := greeter.Execute(ctx, api.NewGreetCommand("Alice"))
+
+  // Option 2: Custom infrastructure
+  myWriter := &MyCustomWriter{}
+  greeter := desktop.GreeterWithWriter(myWriter)
+  ```
+end note
+
+legend right
+  **Library Re-export Pattern**
+  ═══════════════════════════════
+  ✅ Zero overhead (type aliases)
+  ✅ Single import for consumers (api.*)
+  ✅ Clean public interface
+  ✅ Hides internal layer structure
+
+  **Key Difference from App Pattern**
+  ═══════════════════════════════
+  • App: Presentation → Application.Error
+  • Lib: Consumer → API (which re-exports all)
+
+  **API vs API/Desktop**
+  ═══════════════════════════════
+  • api/ - Re-exports types only (no infra)
+  • api/adapter/desktop/ - Wires infrastructure
+endlegend
+
+@enduml

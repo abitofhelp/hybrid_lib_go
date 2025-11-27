@@ -96,7 +96,7 @@ type ConsoleWriter struct {
 // Dependency Inversion:
 //   - Application defines the WriterPort interface it NEEDS
 //   - Infrastructure provides this implementation
-//   - Bootstrap wires them together via generic instantiation
+//   - Composition root (api/adapter/desktop) wires them together via generic instantiation
 //   - Application never depends on Infrastructure
 //
 // Example - Production:

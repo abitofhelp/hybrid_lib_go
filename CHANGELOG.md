@@ -1,11 +1,11 @@
 # Changelog
 
-**Version:** 1.0.0  
-**Date:** November 26, 2025  
-**SPDX-License-Identifier:** BSD-3-Clause  
-**License File:** See the LICENSE file in the project root.  
-**Copyright:** (c) 2025 Michael Gardner, A Bit of Help, Inc.  
-**Status:** Released  
+**Version:** 1.0.0
+**Date:** November 26, 2025
+**SPDX-License-Identifier:** BSD-3-Clause
+**License File:** See the LICENSE file in the project root.
+**Copyright:** (c) 2025 Michael Gardner, A Bit of Help, Inc.
+**Status:** Released
 
 
 All notable changes to Hybrid_Lib_Go will be documented in this file.
@@ -17,12 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-11-26
 
-_First stable release - Professional Go 1.23+ application starter template demonstrating hybrid DDD/Clean/Hexagonal architecture with functional programming principles._
+_First stable release - Professional Go 1.23+ library template demonstrating hybrid DDD/Clean/Hexagonal architecture with functional programming principles._
 
 ### Added
 
 #### Architecture
-- **5-Layer Hexagonal Architecture**: Domain, Application, Infrastructure, Presentation, Bootstrap
+- **4-Layer Library Hexagonal Architecture**: Domain, Application, Infrastructure, API
+- **API Facade Pattern**: api/ re-exports types without importing infrastructure
+- **Desktop Adapter**: api/adapter/desktop/ wires infrastructure as composition root
 - **Static Dispatch via Generics**: Zero-overhead dependency injection using Go generics
 - **Port Abstraction**: Inbound (GreetPort) and Outbound (WriterPort) port interfaces
 - **Architecture Guard**: Python script (arch_guard.py) for automated boundary validation
@@ -45,7 +47,7 @@ _First stable release - Professional Go 1.23+ application starter template demon
 - **GreetUseCase[W WriterPort]**: Generic use case with static dispatch
 - **GreetCommand DTO**: Immutable command for crossing layer boundaries
 - **Unit Model**: Type-safe void/unit representation
-- **Error Re-export**: application/error re-exports domain/error for Presentation layer
+- **Error Re-export**: application/error re-exports domain/error for outer layers (API, adapters)
 
 #### Infrastructure Layer
 - **ConsoleWriter**: Adapter implementing WriterPort
@@ -56,26 +58,25 @@ _First stable release - Professional Go 1.23+ application starter template demon
 - `NewConsoleWriter()`: Convenience factory for stdout
 - `NewStderrWriter()`: Factory for stderr output
 
-#### Presentation Layer
-- **GreetCommand[UC GreetPort]**: Generic CLI command with static dispatch
-- **Exit code mapping**: 0 for success, 1 for error
-- **User-friendly error messages**: Pattern matching on ErrorKind
-
-#### Bootstrap Layer
-- **Composition Root**: Single `Run()` function wiring all dependencies
-- **Generic Instantiation**: Concrete types resolved at compile time
-- **Static Dispatch Chain**: All method calls devirtualized
+#### API Layer (Public Facade)
+- **api/api.go**: Re-exports types from domain and application
+  - Does NOT import infrastructure (maintains architectural boundary)
+  - Zero-overhead type aliases for Result, Person, GreetCommand, etc.
+  - Factory functions for creating domain/application objects
+- **api/adapter/desktop/**: Platform-specific composition root
+  - Wires ConsoleWriter → GreetUseCase → Greeter
+  - Provides ready-to-use `NewGreeter()` for console output
+  - Provides `GreeterWithWriter[W]()` for custom writers
 
 #### Testing
 - **Domain Unit Tests**: 42 assertions in 2 test functions
   - Result[T] monad tests (19 assertions)
   - Person value object tests (23 assertions)
-- **CLI Integration Tests**: 23 tests running actual binary
+- **API Integration Tests**: 9 tests verifying consumer usage patterns
   - Valid input scenarios
-  - Invalid input scenarios (empty, too long, wrong arg count)
-  - Edge cases (whitespace, unicode, special characters)
-  - Table-driven tests for comprehensive coverage
-- **Test Infrastructure**: testify assertions, colored output helpers
+  - Invalid input scenarios (empty, too long)
+  - Error type propagation
+- **Test Infrastructure**: testify assertions, mock writers
 
 #### Documentation
 - **Formal Documentation**:
@@ -83,11 +84,11 @@ _First stable release - Professional Go 1.23+ application starter template demon
   - Software Design Specification (SDS)
   - Software Test Guide (STG)
 - **PlantUML Diagrams** (5 diagrams with SVG):
-  - `layer_dependencies.puml` - 5-layer architecture
+  - `layer_dependencies.puml` - 4-layer library architecture
   - `package_structure.puml` - Package organization
   - `error_handling_flow.puml` - Railway-oriented flow
-  - `static_dispatch.puml` - Static vs dynamic dispatch
-  - `application_error_pattern.puml` - Error re-export pattern
+  - `static_dispatch_api.puml` - Static vs dynamic dispatch
+  - `api_reexport_pattern.puml` - API facade re-export pattern
 - **Guides**:
   - Quick Start Guide
   - Architecture Mapping Guide
@@ -111,21 +112,17 @@ _First stable release - Professional Go 1.23+ application starter template demon
 - Renamed `application/port/outward` to `application/port/outbound` (driven adapters)
 - Updated all imports, documentation, and PlantUML diagrams
 
-#### Presentation Layer Structure
-- Restructured `presentation/cli/command` to `presentation/adapter/cli/command`
+#### API Layer Structure
+- Restructured `api/desktop` to `api/adapter/desktop`
 - Consistent with adapter pattern used in infrastructure layer
-
-#### Testing Improvements
-- Added summary banner to integration tests (matching e2e test format)
-- Integration tests now display pass/fail count in colored banner
+- Aligns with application project's `presentation/adapter/cli/command` structure
 
 #### Tooling
 - Fixed arch_guard.py go.mod parsing to handle multi-line `require (...)` blocks
-- Bootstrap layer now correctly shows all dependencies in architecture validation
+- arch_guard.py validates library-specific rules: api cannot import infrastructure
 
 #### Documentation
-- Updated `docs/index.md` and `docs/quick_start.md` for Go project (was Ada)
-- Updated README.md to reflect static dispatch via generics pattern
+- Updated all documentation for library architecture (4-layer, API facade)
 - All formal documentation and diagrams updated with current paths
 
 ### Fixed
@@ -134,36 +131,38 @@ _First stable release - Professional Go 1.23+ application starter template demon
 - **architecture_mapping.md**: Corrected file paths to match current project structure
 - **ports_mapping.md**: Corrected file paths to match current project structure
 
-### Removed
-
-- **APP_VS_LIB_ARCHITECTURE.md**: Not needed for application starter template
-
 ### Architecture Patterns
 
+- **API Facade Pattern**: api/ re-exports types without importing infrastructure
 - **Static Dependency Injection**: Generic structs with interface constraints (compile-time DI)
 - **Result Monad**: Railway-oriented error handling (no panics across boundaries)
-- **Presentation Isolation**: Presentation uses application/error, not domain/error
-- **Minimal Entry Point**: main() delegates to bootstrap.Run() (1 line)
+- **Composition Root**: api/adapter/desktop/ wires all dependencies together
 - **Ports & Adapters**: Application defines ports, Infrastructure implements adapters
 
 ### Technical Details
 
 ```go
-// Static dispatch - concrete types known at compile time
-consoleWriter := adapter.NewConsoleWriter()
-uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](consoleWriter)
-cmd := command.NewGreetCommand[*usecase.GreetUseCase[*adapter.ConsoleWriter]](uc)
+// API Facade - re-exports types without infrastructure dependency
+import (
+    "github.com/abitofhelp/hybrid_lib_go/api"
+    "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
+)
 
-// All calls are statically dispatched - no vtable lookup
-exitCode := cmd.Run(args)
+// Ready-to-use greeter with console output
+greeter := desktop.NewGreeter()
+result := greeter.Execute(ctx, api.NewGreetCommand("Alice"))
+
+// Custom writer for testing or other output
+greeter := desktop.GreeterWithWriter[*MockWriter](mockWriter)
 ```
 
 ```go
-// Context support for cancellation
-func (uc *GreetUseCase[W]) Execute(ctx context.Context, cmd command.GreetCommand) domerr.Result[model.Unit] {
-    // Context flows through to infrastructure
-    return uc.writer.Write(ctx, message)
-}
+// Static dispatch - concrete types known at compile time
+consoleWriter := adapter.NewConsoleWriter()
+uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](consoleWriter)
+
+// All calls are statically dispatched - no vtable lookup
+result := uc.Execute(ctx, cmd)
 ```
 
 ```go
@@ -183,12 +182,22 @@ person := result.Value()
 
 ### Notes
 
-This is the initial release of Hybrid_Lib_Go, a Go port of the hybrid_app_ada project.
-Both projects demonstrate identical architectural patterns:
-- 5-layer hexagonal architecture
-- Static dispatch for dependency injection
-- Railway-oriented programming with Result monads
-- Clean architecture boundary enforcement
+This is the initial release of Hybrid_Lib_Go, a Go library template companion to hybrid_app_go.
+Both projects demonstrate identical architectural patterns with different entry points:
+
+| Library (4 layers) | Application (5 layers) |
+|--------------------|------------------------|
+| api/ (facade)      | bootstrap/ (main)      |
+| api/adapter/desktop/ | presentation/        |
+| infrastructure/    | infrastructure/        |
+| application/       | application/           |
+| domain/            | domain/                |
+
+Key differences:
+- Library uses API facade pattern (api/ + api/adapter/desktop/)
+- Application uses CLI command pattern (presentation/ + bootstrap/)
+- Both use static dispatch via generics
+- Both use railway-oriented programming with Result monads
 
 ---
 

@@ -8,12 +8,12 @@ title 4-Layer Library Architecture\nHexagonal (Ports & Adapters) + Clean + DDD
 
 package "API Layer (Public Facade)" as API #FFEBCD {
   component "api/" as APIFacade
-  component "api/desktop" as APIDesktop
+  component "api/adapter/desktop" as APIDesktop
   note right of API
     **Public Entry Point**
     - Re-exports domain/application types
     - api/ depends on app + domain ONLY
-    - api/desktop wires infrastructure
+    - api/adapter/desktop wires infrastructure
     - Platform-specific sub-packages
   end note
 }
@@ -69,19 +69,19 @@ Infrastructure -down-> Domain : uses Value Objects
 Application -down-> Domain : orchestrates
 
 ' Forbidden dependency (CRITICAL)
-APIFacade .right.> Infrastructure #red : ❌ FORBIDDEN\nUse api/desktop
+APIFacade .right.> Infrastructure #red : ❌ FORBIDDEN\nUse api/adapter/desktop
 
 legend right
   **Key Architectural Rules (LIBRARY)**
   ═══════════════════════════════════════
   ✅ **api/ → Application + Domain ONLY**
      (does NOT import Infrastructure)
-  ✅ api/desktop → ALL (platform wiring)
+  ✅ api/adapter/desktop → ALL (platform wiring)
   ✅ Infrastructure → Application + Domain
   ✅ Application → Domain
 
   ❌ **NO** api/ → Infrastructure
-     (use api/desktop sub-package instead)
+     (use api/adapter/desktop sub-package instead)
   ❌ **NO** Domain → anything
 
   **Library vs Application**

@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/abitofhelp/hybrid_lib_go/api"
-	"github.com/abitofhelp/hybrid_lib_go/api/desktop"
+	"github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
 	"github.com/abitofhelp/hybrid_lib_go/application/model"
 	domerr "github.com/abitofhelp/hybrid_lib_go/domain/error"
 	"github.com/stretchr/testify/assert"

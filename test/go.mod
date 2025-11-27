@@ -10,12 +10,14 @@ go 1.23.0
 
 require (
 	github.com/abitofhelp/hybrid_lib_go/api v0.0.0
-	github.com/abitofhelp/hybrid_lib_go/api/desktop v0.0.0
+	github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop v0.0.0
+	github.com/abitofhelp/hybrid_lib_go/application v0.0.0
 	github.com/abitofhelp/hybrid_lib_go/domain v0.0.0
 	github.com/stretchr/testify v1.11.1
 )
 
 require (
+	github.com/abitofhelp/hybrid_lib_go/infrastructure v0.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -23,7 +25,7 @@ require (
 
 replace github.com/abitofhelp/hybrid_lib_go/api => ../api
 
-replace github.com/abitofhelp/hybrid_lib_go/api/desktop => ../api/desktop
+replace github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop => ../api/adapter/desktop
 
 replace github.com/abitofhelp/hybrid_lib_go/domain => ../domain
 

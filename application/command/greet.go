@@ -12,7 +12,7 @@
 //   - DTOs should be simple, serializable data structures
 //   - No business logic in DTOs
 //   - DTOs are different from domain entities
-//   - Crosses boundary: Presentation -> Application
+//   - Crosses boundary: API/outer layers -> Application
 //
 // Usage:
 //
@@ -24,7 +24,7 @@ package command
 
 // GreetCommand is a Data Transfer Object for the greet use case.
 //
-// This DTO crosses the presentation -> application boundary. It may carry
+// This DTO crosses the API/outer layer -> application boundary. It may carry
 // invalid data; the domain layer is responsible for validating the name
 // and returning appropriate Result errors.
 //

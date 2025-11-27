@@ -26,7 +26,7 @@ Validates hexagonal architecture boundaries in Go projects.
 **Purpose:** Validate hexagonal architecture boundaries
 
 **What it does:**
-- Enforces layer dependency rules (Domain -> Application -> Infrastructure -> Presentation)
+- Enforces layer dependency rules (Domain -> Application -> Infrastructure -> API/outer layers)
 - Detects illegal imports that violate architecture boundaries
 - Validates that Domain layer has zero external dependencies
 - Parses go.mod files (including multi-line require blocks)

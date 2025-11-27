@@ -17,7 +17,7 @@
 //  1. Application defines WriterPort interface (the contract)
 //  2. Infrastructure implements a struct that satisfies WriterPort
 //  3. Use case is generic over WriterPort: GreetUseCase[W WriterPort]
-//  4. Bootstrap instantiates with concrete type: NewGreetUseCase[*ConsoleWriter](writer)
+//  4. Composition root instantiates with concrete type: NewGreetUseCase[*ConsoleWriter](writer)
 //  5. Compiler knows exact type → static dispatch, no vtable lookup
 //
 // Mapping to Ada:

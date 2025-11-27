@@ -24,7 +24,7 @@
 //   - GreetUseCase[W] -> domain.Person (coordinates)
 //   - GreetUseCase[W] -> application.port.outbound.WriterPort (interface constraint)
 //   - infrastructure.ConsoleWriter -> WriterPort (implements)
-//   - Bootstrap instantiates GreetUseCase[*ConsoleWriter]
+//   - Composition root (api/adapter/desktop) instantiates GreetUseCase[*ConsoleWriter]
 //
 // Mapping to Ada:
 //   - Ada: generic with function Writer(...) return Result; package Application.Usecase.Greet
@@ -35,8 +35,8 @@
 //
 //	import "github.com/abitofhelp/hybrid_lib_go/application/usecase"
 //
-//	// Bootstrap instantiates with concrete type
-//	consoleWriter := &adapter.ConsoleWriter{...}
+//	// Composition root (api/adapter/desktop) instantiates with concrete type
+//	consoleWriter := adapter.NewConsoleWriter()
 //	uc := usecase.NewGreetUseCase[*adapter.ConsoleWriter](consoleWriter)
 //
 //	// Use case Execute is statically dispatched
@@ -57,11 +57,11 @@ import (
 //
 // This use case demonstrates application-layer orchestration with static dispatch:
 //  1. Generic over WriterPort: GreetUseCase[W WriterPort]
-//  2. Receives command DTO from presentation layer
+//  2. Receives command DTO from outer layers (API facade)
 //  3. Validates input using domain layer (Person)
 //  4. Generates greeting message (domain logic)
 //  5. Writes output via infrastructure port (statically dispatched)
-//  6. Returns Result to presentation layer
+//  6. Returns Result to outer layers
 //
 // Static Dispatch:
 //   - Type parameter W is constrained to WriterPort interface
@@ -87,7 +87,7 @@ type GreetUseCase[W outbound.WriterPort] struct {
 //   - Writer instance is injected via constructor
 //   - Use case doesn't know the implementation details
 //   - But compiler knows the concrete type for static dispatch
-//   - Bootstrap wires them together: NewGreetUseCase[*ConsoleWriter](writer)
+//   - Composition root wires them together: NewGreetUseCase[*ConsoleWriter](writer)
 //
 // Mapping to Ada:
 //   - Ada: package Greet_UC is new Application.Usecase.Greet(Writer => Console_Writer.Write);
@@ -112,7 +112,7 @@ func NewGreetUseCase[W outbound.WriterPort](writer W) *GreetUseCase[W] {
 //
 // Parameters:
 //   - ctx: Context for cancellation and deadlines (passed to infrastructure)
-//   - cmd: GreetCommand DTO crossing presentation -> application boundary
+//   - cmd: GreetCommand DTO crossing outer layer -> application boundary
 //
 // Error scenarios:
 //   - ValidationError: Invalid person name (empty, too long)

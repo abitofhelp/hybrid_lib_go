@@ -74,7 +74,7 @@ import (
     "os"
 
     "github.com/abitofhelp/hybrid_lib_go/api"
-    "github.com/abitofhelp/hybrid_lib_go/api/desktop"
+    "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
 )
 
 func main() {
@@ -116,7 +116,7 @@ import (
     "testing"
 
     "github.com/abitofhelp/hybrid_lib_go/api"
-    "github.com/abitofhelp/hybrid_lib_go/api/desktop"
+    "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
     "github.com/abitofhelp/hybrid_lib_go/application/model"
     domerr "github.com/abitofhelp/hybrid_lib_go/domain/error"
 )
@@ -174,7 +174,7 @@ Hybrid_Lib_Go demonstrates **4-layer library hexagonal architecture**:
 
 ```
 ┌─────────────────────────────────────────────┐
-│  API Layer (Public Facade)                  │  ← api/, api/desktop/
+│  API Layer (Public Facade)                  │  ← api/, api/adapter/desktop/
 ├─────────────────────────────────────────────┤
 │  Infrastructure (Adapters)                  │  ← Technical implementations
 ├─────────────────────────────────────────────┤
@@ -188,7 +188,7 @@ Hybrid_Lib_Go demonstrates **4-layer library hexagonal architecture**:
 
 1. **Domain has zero dependencies** - Pure business logic
 2. **API layer does NOT import infrastructure** - Uses re-exports only
-3. **Platform wiring in api/desktop/** - Creates ready-to-use instances
+3. **Platform wiring in api/adapter/desktop/** - Creates ready-to-use instances
 4. **Static dependency injection** - Via generics (compile-time wiring)
 5. **Railway-oriented programming** - Result monads for error handling
 6. **Multi-module workspace** - go.work manages separate go.mod per layer
@@ -198,7 +198,7 @@ Hybrid_Lib_Go demonstrates **4-layer library hexagonal architecture**:
 ```
 Consumer App
     ↓
-api/desktop.Greeter (ready-to-use)
+api/adapter/desktop.Greeter (ready-to-use)
     ↓
 application/usecase.GreetUseCase (validates via Domain)
     ↓
@@ -363,7 +363,7 @@ Start with the API facade:
 cat api/api.go
 
 # See how infrastructure is wired
-cat api/desktop/desktop.go
+cat api/adapter/desktop/desktop.go
 ```
 
 Then explore each layer:
@@ -409,7 +409,7 @@ Follow the pattern:
 2. **Application**: Define command, use case, ports (`application/`)
 3. **Infrastructure**: Implement adapters (`infrastructure/adapter/`)
 4. **API**: Re-export types (`api/api.go`)
-5. **API/desktop**: Wire infrastructure (`api/desktop/desktop.go`)
+5. **API/desktop**: Wire infrastructure (`api/adapter/desktop/desktop.go`)
 6. **Tests**: Add unit/integration tests (`test/`)
 
 ---

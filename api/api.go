@@ -14,12 +14,12 @@
 //   - Re-exports Domain types (Result, ErrorInfo, Person)
 //   - Re-exports Application types (GreetPort, GreetCommand, Unit)
 //   - Does NOT import Infrastructure (hidden implementation detail)
-//   - Use api/desktop for ready-to-use greeter with console output
+//   - Use api/adapter/desktop for ready-to-use greeter with console output
 //
 // Usage:
 //
 //	import "github.com/abitofhelp/hybrid_lib_go/api"
-//	import "github.com/abitofhelp/hybrid_lib_go/api/desktop"
+//	import "github.com/abitofhelp/hybrid_lib_go/api/adapter/desktop"
 //
 //	// Create a greeter with console output
 //	greeter := desktop.NewGreeter()

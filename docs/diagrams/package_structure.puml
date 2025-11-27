@@ -6,7 +6,7 @@ title Package Structure (LIBRARY)\nActual Packages in Each Layer
 
 frame "API Layer (Public Facade)" #FFEBCD {
   component "api" as APIFacade
-  component "api/desktop" as APIDesktop
+  component "api/adapter/desktop" as APIDesktop
   note right of APIFacade
     **Public Entry Point**
     Re-exports domain + application types
@@ -102,13 +102,13 @@ AppInbound -down-> DomainResult : uses
 AppError -down-> DomainError : re-exports
 
 ' Forbidden dependency (critical)
-APIFacade .right.> InfraConsole #red : ❌ FORBIDDEN\nUse api/desktop
+APIFacade .right.> InfraConsole #red : ❌ FORBIDDEN\nUse api/adapter/desktop
 
 legend bottom
   **Library Package Structure**
   ════════════════════════════════════
   • api/         - Public facade (re-exports)
-  • api/desktop/ - Platform-specific wiring
+  • api/adapter/desktop/ - Platform-specific wiring
   • application/ - Use cases, ports, commands
   • domain/      - Pure business logic
   • infrastructure/ - Adapter implementations
@@ -116,10 +116,10 @@ legend bottom
   **Dependency Rules (LIBRARY)**
   ════════════════════════════════════
   ✅ api/ → application/* + domain/*
-  ✅ api/desktop → ALL (composition root)
+  ✅ api/adapter/desktop → ALL (composition root)
   ✅ Infrastructure → application/* + domain/*
   ✅ Application → domain/*
-  ❌ api/ → infrastructure/* (use api/desktop)
+  ❌ api/ → infrastructure/* (use api/adapter/desktop)
 
   **Static Dispatch with Generics**
   ════════════════════════════════════
