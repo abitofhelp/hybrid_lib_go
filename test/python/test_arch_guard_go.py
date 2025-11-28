@@ -130,8 +130,8 @@ LAYER_DEPENDENCY_CASES = [
         from_layer="infrastructure",
         to_layer="api",
         should_violate=True,
-        violation_type="ILLEGAL_LAYER_DEPENDENCY",
-        description="Infrastructure should not depend on API facade",
+        violation_type="FORBIDDEN_LATERAL_DEPENDENCY",
+        description="Infrastructure and API are lateral - no cross-dependency allowed",
     ),
 
     # API layer: can import Application + Domain (NOT Infrastructure!)
@@ -154,7 +154,7 @@ LAYER_DEPENDENCY_CASES = [
         from_layer="api",
         to_layer="infrastructure",
         should_violate=True,
-        violation_type="API_IMPORTS_INFRASTRUCTURE",
+        violation_type="FORBIDDEN_LATERAL_DEPENDENCY",
         description="CRITICAL: API must NOT import infrastructure - use api/adapter/desktop",
     ),
 ]

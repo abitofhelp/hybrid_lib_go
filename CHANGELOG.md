@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+_No unreleased changes._
+
+---
+
 ## [1.0.0] - 2025-11-26
 
 _First stable release - Professional Go 1.23+ library template demonstrating hybrid DDD/Clean/Hexagonal architecture with functional programming principles._
