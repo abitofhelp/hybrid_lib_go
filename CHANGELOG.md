@@ -1,7 +1,7 @@
 # Changelog
 
-**Version:** 1.0.0  
-**Date:** November 26, 2025  
+**Version:** 1.0.1  
+**Date:** November 28, 2025  
 **SPDX-License-Identifier:** BSD-3-Clause
 **License File:** See the LICENSE file in the project root.
 **Copyright:** (c) 2025 Michael Gardner, A Bit of Help, Inc.  
@@ -16,6 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Changed
+
+### Added
+
+### Removed
+
+### Fixed
+
+---
+
+## [1.0.1] - 2025-11-28
 
 ### Added
 
@@ -34,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Assistance Validation**: base.py validates README section placement
 
 ---
+
 
 ## [1.0.0] - 2025-11-26
 
