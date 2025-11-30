@@ -115,7 +115,7 @@ go tool cover -html=coverage.out
 make check-arch
 
 # Or directly
-python3 scripts/arch_guard/arch_guard.py
+python3 scripts/python/arch_guard/arch_guard.py
 
 # Run Python architecture tests
 cd test/python && pytest -v test_arch_guard_go.py

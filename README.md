@@ -13,7 +13,7 @@
 
 A **professional Go library** demonstrating **hybrid DDD/Clean/Hexagonal architecture** with **strict module boundaries** enforced via Go workspaces and **functional programming** principles using custom **domain-level Result monads** (ZERO external dependencies in domain layer).
 
-> **Library Template:** This project serves as a **template for enterprise Go library development**. Use the included `scripts/brand_project/brand_project.py` script to generate a new project from this template with your own project name, module paths, and branding.
+> **Library Template:** This project serves as a **template for enterprise Go library development**. Use the included `scripts/python/brand_project/brand_project.py` script to generate a new project from this template with your own project name, module paths, and branding.
 
 This is a **reusable library** showcasing:
 - **4-Layer Hexagonal Architecture** (Domain, Application, Infrastructure, API)
@@ -33,6 +33,45 @@ This is a **reusable library** showcasing:
 - ✅ Composition root pattern (`api/adapter/desktop`)
 - ✅ Custom writer support for testing
 - ✅ Comprehensive Makefile automation
+
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| **Desktop** | ✅ Full | Console I/O via `api/adapter/desktop` |
+| **Custom** | 🔧 Custom | Requires Writer interface implementation |
+
+### Custom Platform Support
+
+This library uses a **composition root pattern** with dependency injection for platform portability:
+
+| Package | Purpose |
+|---------|---------|
+| `api/` | Public facade, re-exports types (no infrastructure imports) |
+| `api/adapter/desktop/` | Composition root for desktop (ConsoleWriter) |
+| `application/port/` | Port interfaces (Writer) |
+
+**Default**: Desktop platforms use console I/O via `api/adapter/desktop`.
+
+**For custom platforms**, create your own composition root:
+
+```go
+// 1. Implement the Writer interface for your platform
+type UARTWriter struct{}
+
+func (w *UARTWriter) Write(message string) result.Result[result.Unit] {
+    // Write to UART...
+    return result.Ok(result.UnitValue)
+}
+
+// 2. Create operations with your writer
+ops := operations.New(&UARTWriter{})
+
+// 3. Use operations directly
+res := ops.Greet(cmd)
+```
+
+See **[All About Our API](docs/guides/all_about_our_api.md)** for detailed architecture and implementation guidance.
 
 ## Architecture
 
