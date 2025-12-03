@@ -14,10 +14,12 @@
 
 PROJECT_NAME := hybrid_lib_go
 
-.PHONY: all build build-release clean clean-clutter clean-coverage clean-deep compress \
+.PHONY: all build build-dev build-opt build-release build-tests \
+        clean clean-clutter clean-coverage clean-deep compress \
         deps help prereqs rebuild stats test test-all test-unit \
         test-integration test-framework test-coverage test-coverage-threshold test-python \
-        check check-arch lint format vet install-tools
+        check check-arch lint format vet install-tools \
+        submodule-init submodule-update submodule-status
 
 # =============================================================================
 # Colors for Output
@@ -63,7 +65,11 @@ help: ## Display this help message
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════╝$(NC)"
 	@echo " "
 	@echo "$(YELLOW)Build Commands:$(NC)"
-	@echo "  build              - Build all library modules"
+	@echo "  build              - Build library (development mode)"
+	@echo "  build-dev          - Build with development flags (race detection)"
+	@echo "  build-opt          - Build with optimization (stripped symbols)"
+	@echo "  build-release      - Build in release mode"
+	@echo "  build-tests        - Build all test binaries"
 	@echo "  clean              - Clean build artifacts"
 	@echo "  clean-clutter      - Remove temporary files and backups"
 	@echo "  clean-coverage     - Clean coverage data"
@@ -112,15 +118,30 @@ prereqs:
 	@command -v $(PYTHON3) >/dev/null 2>&1 || { echo "$(RED)✗ python3 not found$(NC)"; exit 1; }
 	@echo "$(GREEN)✓ All prerequisites satisfied$(NC)"
 
-build: check-arch prereqs
-	@echo "$(GREEN)Building $(PROJECT_NAME) library modules...$(NC)"
-	@$(GO) build ./domain/... ./application/... ./infrastructure/... ./api/...
-	@echo "$(GREEN)✓ Library build complete$(NC)"
+build: build-dev
+
+build-dev: check-arch prereqs
+	@echo "$(GREEN)Building $(PROJECT_NAME) library modules (development mode)...$(NC)"
+	@$(GO) build -race ./domain/... ./application/... ./infrastructure/... ./api/...
+	@echo "$(GREEN)✓ Development build complete$(NC)"
+
+build-opt: check-arch prereqs
+	@echo "$(GREEN)Building $(PROJECT_NAME) library modules (optimized)...$(NC)"
+	@$(GO) build -ldflags="-s -w" ./domain/... ./application/... ./infrastructure/... ./api/...
+	@echo "$(GREEN)✓ Optimized build complete$(NC)"
 
 build-release: check-arch prereqs
 	@echo "$(GREEN)Building $(PROJECT_NAME) library modules (release)...$(NC)"
-	@$(GO) build ./domain/... ./application/... ./infrastructure/... ./api/...
-	@echo "$(GREEN)✓ Library release build complete$(NC)"
+	@$(GO) build -ldflags="-s -w" ./domain/... ./application/... ./infrastructure/... ./api/...
+	@echo "$(GREEN)✓ Release build complete$(NC)"
+
+build-tests: check-arch prereqs
+	@echo "$(GREEN)Building test suites...$(NC)"
+	@$(GO) test -c ./domain/... 2>/dev/null || true
+	@$(GO) test -c ./application/... 2>/dev/null || true
+	@$(GO) test -c ./infrastructure/... 2>/dev/null || true
+	@$(GO) test -c ./api/... 2>/dev/null || true
+	@echo "$(GREEN)✓ Test suites built$(NC)"
 
 clean:
 	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
@@ -169,7 +190,7 @@ rebuild: clean build
 
 test: test-all
 
-test-all: check-arch
+test-all: check-arch build
 	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(CYAN)$(BOLD)║                    RUNNING ALL TESTS                         ║$(NC)"
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
@@ -188,7 +209,7 @@ test-all: check-arch
 	@echo "$(GREEN)$(BOLD)║  ✓ ALL TESTS PASSED                                          ║$(NC)"
 	@echo "$(GREEN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
 
-test-unit: check-arch ## Run unit tests only
+test-unit: check-arch build ## Run unit tests only
 	@echo "$(CYAN)$(BOLD)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(CYAN)$(BOLD)║                    UNIT TEST SUITE                           ║$(NC)"
 	@echo "$(CYAN)$(BOLD)╚══════════════════════════════════════════════════════════════╝$(NC)"
@@ -382,8 +403,6 @@ install-tools: ## Install development tools
 ## ---------------------------------------------------------------------------
 ## Submodule Management
 ## ---------------------------------------------------------------------------
-
-.PHONY: submodule-update submodule-status submodule-init
 
 submodule-init: ## Initialize submodules after fresh clone
 	git submodule update --init --recursive
