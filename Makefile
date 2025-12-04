@@ -228,53 +228,9 @@ test-integration: check-arch build ## Run integration tests (API usage)
 test-framework: test-unit test-integration ## Run all test suites (unit + integration)
 	@echo "$(GREEN)$(BOLD)✓ All test suites completed$(NC)"
 
-test-coverage: check-arch clean-coverage
+test-coverage: ## Run tests with coverage analysis
 	@echo "$(GREEN)Running tests with coverage analysis...$(NC)"
-	@mkdir -p $(COVERAGE_DIR)
-	@echo ""
-	@echo "$(CYAN)═══════════════════════════════════════════════════════════════$(NC)"
-	@echo "$(CYAN)  Coverage Analysis - $(PROJECT_NAME)$(NC)"
-	@echo "$(CYAN)═══════════════════════════════════════════════════════════════$(NC)"
-	@echo ""
-	@# Run tests with coverage for all layers (Go workspace requires explicit paths)
-	@$(GO) test -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
-		./domain/... ./application/... ./infrastructure/... ./api/... 2>/dev/null || true
-	@echo ""
-	@echo "$(YELLOW)Per-Layer Coverage Summary:$(NC)"
-	@echo "$(YELLOW)───────────────────────────────────────────────────────────────$(NC)"
-	@# Domain layer coverage
-	@printf "  Domain:          "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/domain/" | \
-		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@# Application layer coverage
-	@printf "  Application:     "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/application/" | \
-		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@# Infrastructure layer coverage
-	@printf "  Infrastructure:  "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/infrastructure/" | \
-		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@# API layer coverage
-	@printf "  API:             "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out 2>/dev/null | \
-		grep -E "^github.com/.*/api/" | \
-		awk '{sum+=$$3; count++} END {if(count>0) printf "%.1f%% (%d functions)\n", sum/count, count; else print "N/A"}' || echo "N/A"
-	@echo "$(YELLOW)───────────────────────────────────────────────────────────────$(NC)"
-	@# Total coverage
-	@printf "  $(BOLD)TOTAL:$(NC)             "
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out | grep "^total:" | awk '{print $$3}'
-	@echo ""
-	@# Generate HTML report
-	@$(GO) tool cover -html=$(COVERAGE_DIR)/coverage.out -o $(COVERAGE_DIR)/coverage.html
-	@# Generate text summary
-	@$(GO) tool cover -func=$(COVERAGE_DIR)/coverage.out > $(COVERAGE_DIR)/coverage_summary.txt
-	@echo "$(GREEN)✓ Coverage reports generated:$(NC)"
-	@echo "    HTML report:  $(COVERAGE_DIR)/coverage.html"
-	@echo "    Text summary: $(COVERAGE_DIR)/coverage_summary.txt"
-	@echo ""
+	@$(PYTHON3) scripts/python/makefile/coverage_go.py
 
 test-coverage-threshold: test-coverage ## Run coverage with minimum threshold checks per testing standards
 	@echo ""
