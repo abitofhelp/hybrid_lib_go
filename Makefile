@@ -165,7 +165,7 @@ clean-coverage:
 
 clean-clutter: ## Remove temporary files, backups, and clutter
 	@echo "$(CYAN)Cleaning temporary files and clutter...$(NC)"
-	@$(PYTHON3) scripts/python/makefile/cleanup_temp_files.py
+	@$(PYTHON3) scripts/python/shared/makefile/cleanup_temp_files.py
 	@echo "$(GREEN)✓ Temporary files removed$(NC)"
 
 compress:
@@ -231,7 +231,7 @@ test-framework: test-unit test-integration ## Run all test suites (unit + integr
 
 test-coverage: ## Run tests with coverage analysis
 	@echo "$(GREEN)Running tests with coverage analysis...$(NC)"
-	@$(PYTHON3) scripts/python/makefile/coverage_go.py
+	@$(PYTHON3) scripts/python/shared/makefile/coverage_go.py
 
 test-coverage-threshold: test-coverage ## Run coverage with minimum threshold checks per testing standards
 	@echo ""
@@ -320,7 +320,7 @@ check: lint vet check-arch
 
 check-arch: ## Validate hexagonal architecture boundaries
 	@echo "$(GREEN)Validating architecture boundaries...$(NC)"
-	@PYTHONPATH=scripts/python $(PYTHON3) -m arch_guard
+	@PYTHONPATH=scripts/python/shared $(PYTHON3) -m arch_guard --project-root .
 	@if [ $$? -eq 0 ]; then \
 		echo "$(GREEN)✓ Architecture validation passed$(NC)"; \
 	else \
